@@ -1,4 +1,4 @@
-package com.example.hp.myapplication;
+package com.example.hp.myapplication.recyvlerview;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
@@ -9,8 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.example.hp.myapplication.ILoadmore;
+import com.example.hp.myapplication.R;
 import com.example.hp.myapplication.model.detail.DetailResult;
 import com.example.hp.myapplication.model.utils.StringUtils;
 import com.example.hp.myapplication.model.utils.Validation;
@@ -32,9 +33,10 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
         private UseService useService;
 
 
-        public MyAdapterRecycler(Activity activity, List<DetailResult> storeList, RecyclerView recyclerView) {
+        public MyAdapterRecycler(Activity activity, List<DetailResult> storeList, RecyclerView recyclerView, UseService useService) {
             this.activity = activity;
             this.detailResults = storeList;
+            this.useService = useService;
             final LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
@@ -70,12 +72,7 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
                 View view = LayoutInflater.from(activity)
                         .inflate(R.layout.food_listview, viewGroup, false);
                 final RecyclerView.ViewHolder holder = new FoodViewHolder(view);
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Toast.makeText(activity, "vl item", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                view.setOnClickListener(useService);
                 return holder;
             } else if (i == VIEW_TYPE_LOADING) {
                 View view = LayoutInflater.from(activity)

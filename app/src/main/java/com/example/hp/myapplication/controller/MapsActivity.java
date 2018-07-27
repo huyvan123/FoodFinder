@@ -27,17 +27,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.hp.myapplication.MyAdapterRecycler;
 import com.example.hp.myapplication.PermissionAccess;
-import com.example.hp.myapplication.PlaceApi;
 import com.example.hp.myapplication.R;
-import com.example.hp.myapplication.model.detail.DetailResult;
 import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.recyvlerview.MyAdapterRecycler;
 import com.example.hp.myapplication.retrofit.UseService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -74,14 +76,19 @@ import java.util.concurrent.ExecutionException;
 import static android.location.LocationManager.GPS_PROVIDER;
 import static com.example.hp.myapplication.PermissionAccess.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 
+/**
+ * 01/07/2018
+ * author Huy Van
+ */
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,
         View.OnClickListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnPoiClickListener, GoogleMap.OnMyLocationButtonClickListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AdapterView.OnItemSelectedListener {
 
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
     public static Marker marker;
-    private Button searchStoreBtn;
+    private Button searchStoreBtn, dialogButton, cancelBtn;
+    public static ImageButton imageButton;
     private GoogleApiClient mGoogleApiClient;
     private LocationManager manager;
     private FusedLocationProviderClient mFusedClientProvider ;
@@ -89,44 +96,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean mLocationPermissionGranted;
     private GeoDataClient mGeoDataClient;
     //2 locations to check multiclick on 1 loaction
-    private Location mLastKnownLocation, mAfterLocation;
+    private Location mLastKnownLocation, mBeforeLocation;
     private BottomSheetBehavior bottomSheetBehavior;
-//    private List<FoodStore> storeList;
     private Dialog dialog;
-    private TextView dialogContent;
+    private TextView dialogContent, totalDistance;
     public static TextView tvSoluong;
-    private Button dialogButton;
-    private PlaceApi placeApi;
-    private String url01,url02,url03,url04,url05,url06;
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerView, routeRecycler;
     private MyAdapterRecycler adapterRecycler;
-
-    private static final int REQUEST_CHECK_SETTINGS = 2;
-    private final LatLng mDefaultLocation = new LatLng( 21.028511, 105.804817);
+    public static Location mDeviceLocation = null;
     private static final int DEFAULT_ZOOM = 16;
     private UseService useService;
-    private List<DetailResult> detailResults;
+    public static boolean isRunning = false;
+    private Spinner travelSpiner;
 
-
-    public  static int beginTogetStoreList = 0;
-    private static final int DEFAULT_QUANTITY = 5;
-    private static final String KEY_CAMERA_POSITION = "camera_position";
-    private static final String KEY_LOCATION = "location";
-    private static final int PLACE_PICKER_REQUEST = 1;
-    private static final String  PERMISSION_INTERNET = "You must be connect to the internet!";
-    private static final String  PERMISSION_LOCATION = "You must agree to enable your location!";
-    private static final String SEARCH_TYPE_RESTAURANT = "restaurant";
-    private static final String SEARCH_TYPE_MEAL_DELEVERY = "meal_delivery";
-    private static final String SEARCH_TYPE_MEAL_TAKEAWAY = "meal_takeaway";
-    private static final String SEARCH_TYPE_SUPERMARKET = "supermarket";
-    private static final String SEARCH_KEY_QUAN_NHAU = "qu�n nh?u";
-    private static final String SEARCH_KEY_QUAN_COM = "qu�n c?m";
-
+    /**
+     * oncreate
+     * @param savedInstanceState
+     */
     @SuppressLint("ResourceType")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        System.out.println("vao oncreate");
         setContentView(R.layout.activity_maps);
         //create dialog contents
         dialog = new Dialog(this);
@@ -138,27 +128,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //check internet connection
         try {
             if(new PermissionAccess().execute(MapsActivity.this).get() == false){
-                dialogContent.setText(PERMISSION_INTERNET);
+                dialogContent.setText(StringUtils.PERMISSION_INTERNET);
                 dialog.show();
             }else{
-
-                mAfterLocation = new Location("Huy Van");
-                mAfterLocation.setLongitude(0.0);
-                mAfterLocation.setLatitude(0.0);
-                recyclerView = findViewById(R.id.RecycleviewList);
-                tvSoluong = findViewById(R.id.so_luong);
-                searchStoreBtn = findViewById(R.id.search_store);
-                searchStoreBtn.setOnClickListener(this);
-                mFusedClientProvider = LocationServices.getFusedLocationProviderClient(this);
-                mGeoDataClient = Places.getGeoDataClient(this);
-                if(savedInstanceState != null){
-                    mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
-                    mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
-                }
-                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                        .findFragmentById(R.id.map);
-
-                mapFragment.getMapAsync(this);
+                //init attributes
+                init(savedInstanceState);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -167,7 +141,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * init attributes
+     * @param savedInstanceState
+     */
+    private void init(Bundle savedInstanceState){
+        mBeforeLocation = new Location("Huy Van");
+        mBeforeLocation.setLongitude(0.0);
+        mBeforeLocation.setLatitude(0.0);
+        mDeviceLocation = new Location("HuyVan");
+        mDeviceLocation.setLongitude(0.0);
+        mDeviceLocation.setLatitude(0.0);
+        recyclerView = findViewById(R.id.RecycleviewList);
+        tvSoluong = findViewById(R.id.so_luong);
+        searchStoreBtn = findViewById(R.id.search_store);
+        searchStoreBtn.setOnClickListener(this);
+        imageButton = findViewById(R.id.imageButton);
+        imageButton.setVisibility(View.GONE);
+        imageButton.setOnClickListener(this);
+        mFusedClientProvider = LocationServices.getFusedLocationProviderClient(this);
+        mGeoDataClient = Places.getGeoDataClient(this);
+        if(savedInstanceState != null){
+            mLastKnownLocation = savedInstanceState.getParcelable(StringUtils.KEY_LOCATION);
+            mCameraPosition = savedInstanceState.getParcelable(StringUtils.KEY_CAMERA_POSITION);
+        }
+        //enable google map
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
 
+        mapFragment.getMapAsync(this);
+    }
+
+
+    /**
+     * on map ready
+     * @param googleMap
+     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         System.out.println("vao on map ready");
@@ -201,7 +210,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-
+    /**
+     * request permission result
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         mLocationPermissionGranted = false;
@@ -213,11 +227,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 break;
             default:
-                dialogContent.setText(PERMISSION_LOCATION);
+                dialogContent.setText(StringUtils.PERMISSION_LOCATION);
                 dialog.show();
         }
     }
 
+    /**
+     * update device location ui
+     */
     @SuppressLint("MissingPermission")
     private void updateLocationUI(){
         if(mMap == null){
@@ -239,6 +256,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * set device location to map
+     */
     @SuppressLint("MissingPermission")
     private void getDeviceLocation(){
         try{
@@ -250,6 +270,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     public void onSuccess(Location location) {
                                         if(location != null){
                                             System.out.println("key_01 location != null");
+                                            setLocation1FromLocation2(mDeviceLocation,location);
                                             mLastKnownLocation = location;
                                             LatLng latLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
                                             marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
@@ -266,6 +287,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * on selected item
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
@@ -288,42 +314,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return true;
     }
 
+    /**
+     * create map style
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.place_menu, menu);
         return true;
     }
 
-
+    /**
+     * on map clicked
+     * @param latLng
+     */
     @SuppressLint("MissingPermission")
     @Override
     public void onMapClick(LatLng latLng) {
+        updateMarker(latLng);
+    }
+
+    private void updateMarker(LatLng latLng){
         if(marker != null){
             marker.remove();
         }
         //set current location
         mLastKnownLocation.setLatitude(latLng.latitude);
         mLastKnownLocation.setLongitude(latLng.longitude);
-        updateLocationUI();
         marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM),1000,null);
     }
 
-
+    /**
+     * on button or something clicked
+     * @param view
+     */
     @Override
     public void onClick(View view) {
         if(view.getId() == R.id.search_store){
-            if(!isLocationTheSame(mAfterLocation,mLastKnownLocation)) {
-                setmAfterLocation(mLastKnownLocation);
+            isRunning = false;
+            imageButton.setVisibility(View.GONE);
+            if(!isLocationTheSame(mBeforeLocation,mLastKnownLocation)) {
+                setLocation1FromLocation2(mBeforeLocation,mLastKnownLocation);
                 UseService.searchResults = new ArrayList<>();
                 bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
                 useService = new UseService(mMap,searchStoreBtn,this,bottomSheetBehavior,recyclerView,adapterRecycler);
-                useService.addRequest(SEARCH_TYPE_MEAL_DELEVERY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(SEARCH_TYPE_MEAL_TAKEAWAY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(SEARCH_TYPE_RESTAURANT, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(SEARCH_TYPE_SUPERMARKET, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, SEARCH_KEY_QUAN_COM);
-                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, SEARCH_KEY_QUAN_NHAU);
+                useService.addRequest(StringUtils.SEARCH_TYPE_MEAL_DELEVERY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(StringUtils.SEARCH_TYPE_MEAL_TAKEAWAY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(StringUtils.SEARCH_TYPE_RESTAURANT, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(StringUtils.SEARCH_TYPE_SUPERMARKET, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, StringUtils.SEARCH_KEY_QUAN_COM);
+                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, StringUtils.SEARCH_KEY_QUAN_NHAU);
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 useService.action();
             }else{
@@ -332,6 +374,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }else if(view.getId() == dialogButton.getId()){
             dialog.cancel();
             this.finishAffinity();
+        }else if(view.getId() == imageButton.getId()){
+            dialog = new Dialog(this);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setContentView(R.layout.dialog_route);
+            totalDistance = dialog.findViewById(R.id.total_distance);
+            travelSpiner = dialog.findViewById(R.id.travel_spinner);
+            routeRecycler = dialog.findViewById(R.id.step_recyrcler);
+
+            List<String> list = new ArrayList<>();
+            list.add(StringUtils.BICYCLING);
+            list.add(StringUtils.WALKING);
+            list.add(StringUtils.DRIVING);
+            list.add(StringUtils.TRANSIT);
+            @SuppressLint("ResourceType") ArrayAdapter<String> adapter = new ArrayAdapter<>(this, travelSpiner.getId(),list);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            dialogButton = dialog.findViewById(R.id.confirm);
+            dialogButton.setOnClickListener(this);
+            travelSpiner.setAdapter(adapter);
         }
     }
 
@@ -367,6 +427,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return true;
     }
 
+    /**
+     * turn on gps
+     */
     private void turnOnGPS(){
         if (mGoogleApiClient == null) {
             System.out.println("key_01 vao google api client = null");
@@ -413,8 +476,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             try {
                                 status.startResolutionForResult(
                                         MapsActivity.this,
-                                        REQUEST_CHECK_SETTINGS);
-//                                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                                        StringUtils.REQUEST_CHECK_SETTINGS);
                             } catch (IntentSender.SendIntentException e) {
                                 e.printStackTrace();
                             }
@@ -448,10 +510,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
+    /**
+     * on activity result
+     * @param requestCode
+     * @param resultCode
+     * @param intent
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         switch (requestCode) {
-            case REQUEST_CHECK_SETTINGS:
+            case StringUtils.REQUEST_CHECK_SETTINGS:
 //                this.finish();
                 switch (resultCode) {
                     case Activity.RESULT_OK:
@@ -466,8 +535,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         break;
                 }
                 break;
-            case PLACE_PICKER_REQUEST:
-                if(requestCode == PLACE_PICKER_REQUEST){
+            case StringUtils.PLACE_PICKER_REQUEST:
+                if(requestCode == StringUtils.PLACE_PICKER_REQUEST){
                     if(resultCode == RESULT_OK){
                         Place place = PlacePicker.getPlace(this, intent);
                         mLastKnownLocation.setLatitude(place.getLatLng().latitude);
@@ -480,6 +549,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
+        if(isRunning){
+            String origin = MapsActivity.mDeviceLocation.getLatitude()+","+MapsActivity.mDeviceLocation.getLongitude();
+            useService.getDirections(origin);
+        }else{
+            setLocation1FromLocation2(mDeviceLocation,location);
+            updateMarker(new LatLng(location.getLatitude(),location.getLongitude()));
+        }
         System.out.println("key_01 loaction changed");
     }
 
@@ -513,6 +589,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * check 2 locations are the same
+     * @param l1
+     * @param l2
+     * @return
+     */
     private boolean isLocationTheSame(Location l1, Location l2){
         if(l1.getLatitude() == l2.getLatitude() && l1.getLongitude() == l2.getLongitude()){
             return true;
@@ -520,8 +602,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return false;
     }
 
-    private void setmAfterLocation(Location location){
-        mAfterLocation.setLatitude(location.getLatitude());
-        mAfterLocation.setLongitude(location.getLongitude());
+    /**
+     * setLocation1FromLocation2
+     * @param location1
+     * @param location2
+     */
+
+    private void setLocation1FromLocation2(Location location1, Location location2){
+        if(location1 == null){
+            location1 = location2;
+        }else {
+            location1.setLatitude(location2.getLatitude());
+            location1.setLongitude(location2.getLongitude());
+        }
+    }
+
+    /**
+     * on item selected
+     * i is position
+     * @param adapterView
+     * @param view
+     * @param i
+     * @param l
+     */
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        String travel = adapterView.getItemAtPosition(i).toString();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
     }
 }

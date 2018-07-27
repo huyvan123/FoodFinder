@@ -22,4 +22,13 @@
         android:text="@string/search"
         android:layout_marginTop="10dp"
         android:paddingRight="10dp"/>
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageButton"
+        android:layout_centerVertical="false"
+        android:layout_marginTop="400dp"
+        android:layout_marginLeft="280dp"
+        android:layout_centerHorizontal="false"
+        android:src="@drawable/ic_action_name"/>
 </RelativeLayout>

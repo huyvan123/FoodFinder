@@ -29,7 +29,7 @@ public class ImageSetting {
         builder.append(StringUtils.TYPE_PHOTO);
         builder.append("?maxwidth=").append(maxWidth);
         builder.append("&photoreference=").append(photoReference);
-        builder.append("&key=").append(StringUtils.API_KEY);
+        builder.append("&key=").append(StringUtils.API_SERVER_KEY);
         return builder.toString();
     }
 }

@@ -2,18 +2,24 @@ package com.example.hp.myapplication.retrofit;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Handler;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.hp.myapplication.ILoadmore;
-import com.example.hp.myapplication.MyAdapterRecycler;
+import com.example.hp.myapplication.recyvlerview.MyAdapterRecycler;
 import com.example.hp.myapplication.WrapContentLinearLayoutManager;
 import com.example.hp.myapplication.controller.MapsActivity;
 import com.example.hp.myapplication.model.detail.DetailResponse;
 import com.example.hp.myapplication.model.detail.DetailResult;
+import com.example.hp.myapplication.model.directions.DirectionResponse;
+import com.example.hp.myapplication.model.directions.Leg;
+import com.example.hp.myapplication.model.directions.Route;
+import com.example.hp.myapplication.model.directions.Step;
 import com.example.hp.myapplication.model.search.SearchResponse;
 import com.example.hp.myapplication.model.search.SearchResults;
 import com.example.hp.myapplication.model.utils.StringUtils;
@@ -22,6 +28,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +39,12 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class UseService{
+/**
+ * 01/07/2018
+ *  author HuyVan
+ */
+
+public class UseService implements View.OnClickListener{
     private IGoodService iService;
     public static List<Marker> markerList = new ArrayList<>();;
     private GoogleMap mMap;
@@ -42,14 +54,24 @@ public class UseService{
     private List<DetailResult> detailResults;
     private Bitmap bitmap;
     private List<Map<String,String>> requestURL;
-    //count1 is request quntity, count2 to check search quantity, count3 check search detail quantity
+    //count1 is request quantity, count2 to check search quantity, count3 check search detail quantity
     private int count1,count2, count3;
     private static int defaultQuantity =0;
     private BottomSheetBehavior bottomSheetBehavior;
     private RecyclerView recyclerView;
     private MyAdapterRecycler adapterRecycler;
     private boolean checkOneClick = true;
+    private String destination;
 
+    /**
+     *
+     * @param googleMap
+     * @param button
+     * @param activity
+     * @param bottomSheetBehavior
+     * @param recyclerView
+     * @param adapterRecycler
+     */
     public UseService(GoogleMap googleMap, Button button, Activity activity, BottomSheetBehavior bottomSheetBehavior, RecyclerView recyclerView, MyAdapterRecycler adapterRecycler) {
         System.out.println("retrofit vao khoi tao");
         this.iService = PlaceApi.getIGoodService();
@@ -62,6 +84,9 @@ public class UseService{
         this.adapterRecycler = adapterRecycler;
     }
 
+    /**
+     * set all marker of food store to map
+     */
     private void setAllMarkerToMap(){
         System.out.println("vao marker");
         activity.runOnUiThread(new Runnable() {
@@ -84,6 +109,11 @@ public class UseService{
         });
     }
 
+    /**
+     * load food_store info from quantity and begin point
+     * @param quantity
+     * @param begin
+     */
     public void loadFoodStore(int quantity, int begin){
         defaultQuantity = quantity;
         count3 = 0;
@@ -97,8 +127,12 @@ public class UseService{
         }
     }
 
+    /**
+     * get food store detail
+     * @param placeId
+     */
     private void getFoodStoreDetail(String placeId){
-        iService.getDetailResponse(placeId,StringUtils.API_KEY).enqueue(new Callback<DetailResponse>() {
+        iService.getDetailResponse(placeId,StringUtils.API_SERVER_KEY).enqueue(new Callback<DetailResponse>() {
             @Override
             public void onResponse(Call<DetailResponse> call, Response<DetailResponse> response) {
                 count3++;
@@ -124,6 +158,14 @@ public class UseService{
         });
     }
 
+    /**
+     * add search style, type search
+     * @param type
+     * @param lat
+     * @param lng
+     * @param radius
+     * @param keyWord
+     */
     public void addRequest(String type, double lat, double lng, int radius, String keyWord){
         count1++;
         Map<String, String> map = new HashMap<>();
@@ -131,10 +173,13 @@ public class UseService{
         map.put(StringUtils.LOCATION,new StringBuilder(String.valueOf(lat)).append(",").append(String.valueOf(lng)).toString());
         map.put(StringUtils.RADIUS,String.valueOf(radius));
         map.put(StringUtils.KEYWORD,keyWord);
-        map.put(StringUtils.KEY,StringUtils.API_KEY);
+        map.put(StringUtils.KEY,StringUtils.API_SERVER_KEY);
         requestURL.add(map);
     }
 
+    /**
+     * go first to find food store
+     */
     public void action(){
         enableProgressBar();
         for (Map<String, String> url : requestURL){
@@ -159,7 +204,7 @@ public class UseService{
                             setAllMarkerToMap();
                             detailResults.remove(detailResults.size() -1 );
                             adapterRecycler.notifyItemRemoved(detailResults.size());
-                            loadFoodStore(5,0);
+                            loadFoodStore(StringUtils.DEFAULT_QUANTITY,StringUtils.DEFAULT_BEGIN);
                         }
                     }
 
@@ -178,7 +223,7 @@ public class UseService{
                                 setAllMarkerToMap();
                                 detailResults.remove(detailResults.size() -1 );
                                 adapterRecycler.notifyItemRemoved(detailResults.size());
-                                loadFoodStore(5,0);
+                                loadFoodStore(StringUtils.DEFAULT_QUANTITY,StringUtils.DEFAULT_BEGIN);
                             }
                         }
                     }
@@ -189,6 +234,9 @@ public class UseService{
         }
     }
 
+    /**
+     * set recycler to bottom sheet
+     */
     private void setBottomSheet(){
         adapterRecycler.setLoadMore(new ILoadmore() {
             @Override
@@ -209,10 +257,8 @@ public class UseService{
                             adapterRecycler.notifyItemRemoved(detailResults.size());
                             //add load more
                             loadFoodStore(StringUtils.DEFAULT_QUANTITY,detailResults.size());
-//                            adapterRecycler.notifyDataSetChanged();
-//                            adapterRecycler.setLoader();
                         }
-                    }, 3000);
+                    },StringUtils.DEFAULT_TIME_WAITING);
                 }else{
                     Toast.makeText(activity, "Da tai het du lieu!", Toast.LENGTH_SHORT).show();
                 }
@@ -221,10 +267,13 @@ public class UseService{
         System.out.println("done");
     }
 
+    /**
+     * turn on progress bar
+     */
     private void enableProgressBar(){
         recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(activity));
         detailResults = new ArrayList<>();
-        adapterRecycler = new MyAdapterRecycler(activity, detailResults, recyclerView);
+        adapterRecycler = new MyAdapterRecycler(activity, detailResults, recyclerView, this);
         recyclerView.setAdapter(adapterRecycler);
         detailResults.add(null);
         recyclerView.post(new Runnable() {
@@ -234,5 +283,98 @@ public class UseService{
             }
         });
 
+    }
+
+    @Override
+    public void onClick(View view) {
+        MapsActivity.isRunning = true;
+        MapsActivity.imageButton.setVisibility(View.VISIBLE);
+        System.out.println("vao onclick");
+        int position = recyclerView.getChildAdapterPosition(view);
+        DetailResult detailResult = detailResults.get(position);
+        if(bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        }
+        mMap.clear();
+        double lat = detailResult.getGeometry().getLocation().getLatitude();
+        double lng = detailResult.getGeometry().getLocation().getLongtitude();
+        mMap.addMarker(new MarkerOptions().position(new LatLng(lat,lng)).icon(BitmapDescriptorFactory.defaultMarker()));
+        MapsActivity.marker = mMap.addMarker(new MarkerOptions().position(new LatLng(MapsActivity.mDeviceLocation.getLatitude(),MapsActivity.mDeviceLocation.getLongitude()))
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+        destination = detailResult.getGeometry().getLocation().getLatitude()+","+detailResult.getGeometry().getLocation().getLongtitude();
+        String origin = MapsActivity.mDeviceLocation.getLatitude()+","+MapsActivity.mDeviceLocation.getLongitude();
+        getDirections(origin);
+    }
+
+    public void getDirections(String originLocation){
+        System.out.println("vao get direction");
+        iService.getDirectionsResponse(originLocation,destination,StringUtils.DRIVING,StringUtils.API_CLIENT_KEY)
+                .enqueue(new Callback<DirectionResponse>() {
+                    @Override
+                    public void onResponse(Call<DirectionResponse> call, Response<DirectionResponse> response) {
+                        System.out.println("direction url: "+ call.request().url());
+                        if (response.isSuccessful()) {
+                            System.out.println("directions vao successful");
+                            DirectionResponse directionResponse = response.body();
+                            PolylineOptions polylineOptions = null;
+                            for (Route route: directionResponse.getRoutes()) {
+                                for (Leg leg: route.getLegs()) {
+                                    for (Step step: leg.getSteps()) {
+                                        polylineOptions = new PolylineOptions();
+                                        String point = step.getPolyline().getPoint();
+                                        List<LatLng> latLngs = decodePolyline(point);
+                                        polylineOptions.addAll(latLngs);
+                                        polylineOptions.width(15);
+                                        polylineOptions.color(Color.BLUE);
+                                        polylineOptions.geodesic(true);
+                                        mMap.addPolyline(polylineOptions);
+                                    }
+                                }
+                            }
+                            if(polylineOptions != null){
+//                                mMap.addPolyline(polylineOptions);
+                            }else{
+                                Toast.makeText(activity, "Direction not found!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                    @Override
+                    public void onFailure(Call<DirectionResponse> call, Throwable t) {
+                        System.out.println("url: "+ call.request().url());
+                    }
+                });
+    }
+    private List<LatLng> decodePolyline(String encoded) {
+        List<LatLng> poly = new ArrayList();
+        int index = 0, len = encoded.length();
+        int lat = 0, lng = 0;
+        while (index < len) {
+            try {
+                int b, shift = 0, result = 0;
+                do {
+                    b = encoded.charAt(index) - 63;
+                    index++;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charAt(index) - 63;
+                    index++;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+                LatLng latLng = new LatLng((double) (lat / 1E5),  (double) (lng / 1E5));
+                poly.add(latLng);
+            } catch (Exception e) {
+                break;
+            }
+        }
+        return poly;
     }
 }

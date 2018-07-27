@@ -44,7 +44,8 @@ public interface StringUtils {
     public static final String TYPE_SEARCH = "/nearbysearch";
     public static final String TYPE_PHOTO = "/photo";
     public static final String OUT_JSON = "/json";
-    public static final String API_KEY = "AIzaSyB5x96cq3PIuDGjyi2cec4xNfHR2JqO6jA";
+    public static final String API_SERVER_KEY = "AIzaSyB5x96cq3PIuDGjyi2cec4xNfHR2JqO6jA";
+    public static final String API_CLIENT_KEY = "AIzaSyAgE2prJtrniCIAQiDoikxPa6QKMnOY0qg";
     public static final String RADIUS = "radius";
     public static final String TYPE = "type";
     public static final String KEYWORD = "keyword";
@@ -54,7 +55,49 @@ public interface StringUtils {
     public static final String MAXWIDTH_IMAGE = "400";
     public static final String PHOTOREFERENCE = "photoreference";
     public static final int DEFAULT_QUANTITY = 5;
+    public static final int DEFAULT_BEGIN = 0;
+    public static final long DEFAULT_TIME_WAITING = 3000;
     public static final String NA = "N/A";
 
     public static final int DEFAULT_RADIUS = 1000;
+    public static final String KEY_CAMERA_POSITION = "camera_position";
+    public static final String KEY_LOCATION = "location";
+    public static final int PLACE_PICKER_REQUEST = 1;
+    public static final String  PERMISSION_INTERNET = "You must be connect to the internet!";
+    public static final String  PERMISSION_LOCATION = "You must agree to enable your location!";
+    public static final String SEARCH_TYPE_RESTAURANT = "restaurant";
+    public static final String SEARCH_TYPE_MEAL_DELEVERY = "meal_delivery";
+    public static final String SEARCH_TYPE_MEAL_TAKEAWAY = "meal_takeaway";
+    public static final String SEARCH_TYPE_SUPERMARKET = "supermarket";
+    public static final String SEARCH_KEY_QUAN_NHAU = "qu�n nh?u";
+    public static final String SEARCH_KEY_QUAN_COM = "qu�n c?m";
+    public static final int REQUEST_CHECK_SETTINGS = 2;
+
+    //directions
+    public static final String POLYLINE = "polyline";
+    public static final String POINTS = "points";
+    public static final String DURATION = "duration";
+    public static final String DISTANCE = "distance";
+    public static final String HTML_INSTRUCTIONS = "html_instructions";
+    public static final String LEGS = "legs";
+    public static final String BOUNDS = "bounds";
+    public static final String ROUTES = "routes";
+    public static final String TEXT = "text";
+    public static final String VALUE = "value";
+    public static final String END_LOCATION = "end_location";
+    public static final String START_LOCATION = "start_location";
+    public static final String TRAVEL_MODE = "travel_mode";
+    public static final String END_ADDRESS = "end_address";
+    public static final String START_ADDRESS = "start_address";
+    public static final String STEPS = "steps";
+    public static final String OVERVIEW_POLYLINE = "overview_polyline";
+
+
+    //route
+    public static final String WALKING = "walking";
+    public static final String TRANSIT = "transit";
+    public static final String BICYCLING = "bicycling";
+    public static final String DRIVING = "driving";
+
+
 }
