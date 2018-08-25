@@ -1,12 +1,12 @@
 package com.example.hp.myapplication.model.search;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class SearchResponse implements StringUtils {
+public class SearchResponse implements FoodFinderUtils {
     @SerializedName(HTML_ATTRIBUTION)
     @Expose
     private List<String> htmlAttribution;

@@ -3,9 +3,9 @@ package com.example.hp.myapplication.model.detail;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 
-public class Photos implements StringUtils {
+public class Photos implements FoodFinderUtils {
     @SerializedName(WIDTH)
     @Expose
     private int width;

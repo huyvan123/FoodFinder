@@ -1,10 +1,10 @@
 package com.example.hp.myapplication.model.detail;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class LocationCreator implements StringUtils {
+public class LocationCreator implements FoodFinderUtils {
     @SerializedName(LAT)
     @Expose
     private Double latitude;

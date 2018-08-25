@@ -1,11 +1,11 @@
 package com.example.hp.myapplication.model.search;
 
 import com.example.hp.myapplication.model.detail.Geometry;
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class SearchResults implements StringUtils {
+public class SearchResults implements FoodFinderUtils {
     @SerializedName(PLACE_ID)
     @Expose
     private String placeId;

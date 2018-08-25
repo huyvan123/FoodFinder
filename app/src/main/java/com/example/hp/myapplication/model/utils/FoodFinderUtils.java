@@ -1,6 +1,8 @@
 package com.example.hp.myapplication.model.utils;
 
-public interface StringUtils {
+import com.google.android.gms.maps.model.Marker;
+
+public interface FoodFinderUtils {
 
     public static final String HTML_ATTRIBUTION = "html_attributions";
     public static final String NEXT_PAGE_TOKEN = "next_page_token";
@@ -57,6 +59,7 @@ public interface StringUtils {
     public static final int DEFAULT_QUANTITY = 5;
     public static final int DEFAULT_BEGIN = 0;
     public static final long DEFAULT_TIME_WAITING = 3000;
+    public static final int DEFAULT_ZOOM = 16;
     public static final String NA = "N/A";
 
     public static final int DEFAULT_RADIUS = 1000;
@@ -98,6 +101,7 @@ public interface StringUtils {
     public static final String TRANSIT = "transit";
     public static final String BICYCLING = "bicycling";
     public static final String DRIVING = "driving";
+    public static final String VIETNAMESE = "vi";
 
 
 }

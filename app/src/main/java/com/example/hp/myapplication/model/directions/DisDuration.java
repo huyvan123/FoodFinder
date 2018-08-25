@@ -1,10 +1,10 @@
 package com.example.hp.myapplication.model.directions;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class DisDuration implements StringUtils {
+public class DisDuration implements FoodFinderUtils {
     @SerializedName(TEXT)
     @Expose
     private String text;

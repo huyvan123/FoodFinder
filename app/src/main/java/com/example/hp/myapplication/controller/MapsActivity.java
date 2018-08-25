@@ -38,8 +38,12 @@ import android.widget.Toast;
 
 import com.example.hp.myapplication.PermissionAccess;
 import com.example.hp.myapplication.R;
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.WrapContentLinearLayoutManager;
+import com.example.hp.myapplication.model.directions.Leg;
+import com.example.hp.myapplication.model.directions.Step;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.example.hp.myapplication.recyvlerview.MyAdapterRecycler;
+import com.example.hp.myapplication.recyvlerview.RouteAdapterRecycler;
 import com.example.hp.myapplication.retrofit.UseService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -73,6 +77,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import arcore.MyArActivity;
+
 import static android.location.LocationManager.GPS_PROVIDER;
 import static com.example.hp.myapplication.PermissionAccess.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 
@@ -82,16 +88,21 @@ import static com.example.hp.myapplication.PermissionAccess.PERMISSIONS_REQUEST_
  */
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,
         View.OnClickListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnPoiClickListener, GoogleMap.OnMyLocationButtonClickListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AdapterView.OnItemSelectedListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
+    public Marker marker;
+    public Location mDeviceLocation = null;
+    public boolean isDeviceLocationChanged = false;
+    public ImageButton imageButton;
+    public TextView tvSoluong;
+    public static Leg legDirections;
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
-    public static Marker marker;
-    private Button searchStoreBtn, dialogButton, cancelBtn;
-    public static ImageButton imageButton;
+    private Button searchStoreBtn, dialogButton, cancelBtn, startArBtn;
     private GoogleApiClient mGoogleApiClient;
     private LocationManager manager;
     private FusedLocationProviderClient mFusedClientProvider ;
+    private boolean isDialogDismiss;
 
     private boolean mLocationPermissionGranted;
     private GeoDataClient mGeoDataClient;
@@ -100,14 +111,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private BottomSheetBehavior bottomSheetBehavior;
     private Dialog dialog;
     private TextView dialogContent, totalDistance;
-    public static TextView tvSoluong;
     private RecyclerView recyclerView, routeRecycler;
+    //adapter for food list detail
     private MyAdapterRecycler adapterRecycler;
-    public static Location mDeviceLocation = null;
-    private static final int DEFAULT_ZOOM = 16;
+    //adapter of recycler for step of direction
+    private RouteAdapterRecycler routeAdapterRecycler;
     private UseService useService;
-    public static boolean isRunning = false;
-    private Spinner travelSpiner;
 
     /**
      * oncreate
@@ -128,7 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //check internet connection
         try {
             if(new PermissionAccess().execute(MapsActivity.this).get() == false){
-                dialogContent.setText(StringUtils.PERMISSION_INTERNET);
+                dialogContent.setText(FoodFinderUtils.PERMISSION_INTERNET);
                 dialog.show();
             }else{
                 //init attributes
@@ -152,6 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDeviceLocation = new Location("HuyVan");
         mDeviceLocation.setLongitude(0.0);
         mDeviceLocation.setLatitude(0.0);
+        legDirections = new Leg();
         recyclerView = findViewById(R.id.RecycleviewList);
         tvSoluong = findViewById(R.id.so_luong);
         searchStoreBtn = findViewById(R.id.search_store);
@@ -162,8 +172,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mFusedClientProvider = LocationServices.getFusedLocationProviderClient(this);
         mGeoDataClient = Places.getGeoDataClient(this);
         if(savedInstanceState != null){
-            mLastKnownLocation = savedInstanceState.getParcelable(StringUtils.KEY_LOCATION);
-            mCameraPosition = savedInstanceState.getParcelable(StringUtils.KEY_CAMERA_POSITION);
+            mLastKnownLocation = savedInstanceState.getParcelable(FoodFinderUtils.KEY_LOCATION);
+            mCameraPosition = savedInstanceState.getParcelable(FoodFinderUtils.KEY_CAMERA_POSITION);
         }
         //enable google map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -227,7 +237,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 break;
             default:
-                dialogContent.setText(StringUtils.PERMISSION_LOCATION);
+                dialogContent.setText(FoodFinderUtils.PERMISSION_LOCATION);
                 dialog.show();
         }
     }
@@ -263,24 +273,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void getDeviceLocation(){
         try{
             if(mLocationPermissionGranted){
-//                @SuppressLint("MissingPermission") Task<Location> locationResult =
-                        mFusedClientProvider.getLastLocation()
-                                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                                    @Override
-                                    public void onSuccess(Location location) {
-                                        if(location != null){
-                                            System.out.println("key_01 location != null");
-                                            setLocation1FromLocation2(mDeviceLocation,location);
-                                            mLastKnownLocation = location;
-                                            LatLng latLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
-                                            marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
-                                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM),1000,null);
-                                        }else{
-                                            System.out.println("key_01 location == null");
+                mFusedClientProvider.getLastLocation()
+                        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                if(location != null){
+                                    System.out.println("key_01 location != null");
+                                    setLocation1FromLocation2(mDeviceLocation,location);
+                                    mLastKnownLocation = location;
+                                    LatLng latLng = new LatLng(mLastKnownLocation.getLatitude()
+                                            , mLastKnownLocation.getLongitude());
+                                    marker = mMap.addMarker(new MarkerOptions()
+                                            .position(latLng)
+                                            .icon(BitmapDescriptorFactory
+                                                    .defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+                                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng
+                                            , FoodFinderUtils.DEFAULT_ZOOM),1000,null);
+                                    }else{
+                                    System.out.println("key_01 location == null");
                                             turnOnGPS();
-                                        }
-                                    }
-                                });
+                                }
+                            }
+                        });
             }
         }catch (Exception e){
             Log.e("Exception: %s", e.getMessage());
@@ -343,7 +357,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mLastKnownLocation.setLatitude(latLng.latitude);
         mLastKnownLocation.setLongitude(latLng.longitude);
         marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM),1000,null);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, FoodFinderUtils.DEFAULT_ZOOM),1000,null);
     }
 
     /**
@@ -353,19 +367,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onClick(View view) {
         if(view.getId() == R.id.search_store){
-            isRunning = false;
+            isDialogDismiss = false;
+            isDeviceLocationChanged = false;
             imageButton.setVisibility(View.GONE);
             if(!isLocationTheSame(mBeforeLocation,mLastKnownLocation)) {
                 setLocation1FromLocation2(mBeforeLocation,mLastKnownLocation);
                 UseService.searchResults = new ArrayList<>();
                 bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
                 useService = new UseService(mMap,searchStoreBtn,this,bottomSheetBehavior,recyclerView,adapterRecycler);
-                useService.addRequest(StringUtils.SEARCH_TYPE_MEAL_DELEVERY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(StringUtils.SEARCH_TYPE_MEAL_TAKEAWAY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(StringUtils.SEARCH_TYPE_RESTAURANT, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(StringUtils.SEARCH_TYPE_SUPERMARKET, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, null);
-                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, StringUtils.SEARCH_KEY_QUAN_COM);
-                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), StringUtils.DEFAULT_RADIUS, StringUtils.SEARCH_KEY_QUAN_NHAU);
+                useService.addRequest(FoodFinderUtils.SEARCH_TYPE_MEAL_DELEVERY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), FoodFinderUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(FoodFinderUtils.SEARCH_TYPE_MEAL_TAKEAWAY, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), FoodFinderUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(FoodFinderUtils.SEARCH_TYPE_RESTAURANT, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), FoodFinderUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(FoodFinderUtils.SEARCH_TYPE_SUPERMARKET, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), FoodFinderUtils.DEFAULT_RADIUS, null);
+                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), FoodFinderUtils.DEFAULT_RADIUS, FoodFinderUtils.SEARCH_KEY_QUAN_COM);
+                useService.addRequest(null, mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude(), FoodFinderUtils.DEFAULT_RADIUS, FoodFinderUtils.SEARCH_KEY_QUAN_NHAU);
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 useService.action();
             }else{
@@ -375,23 +390,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             dialog.cancel();
             this.finishAffinity();
         }else if(view.getId() == imageButton.getId()){
-            dialog = new Dialog(this);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setContentView(R.layout.dialog_route);
-            totalDistance = dialog.findViewById(R.id.total_distance);
-            travelSpiner = dialog.findViewById(R.id.travel_spinner);
-            routeRecycler = dialog.findViewById(R.id.step_recyrcler);
+            if(isDialogDismiss) {
+                dialog.show();
+            }else {
+                dialog = new Dialog(this);
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialog.setContentView(R.layout.dialog_route);
+                totalDistance = dialog.findViewById(R.id.total_distance);
+                cancelBtn = dialog.findViewById(R.id.cancel_dialog_steps);
+                cancelBtn.setOnClickListener(this);
+                startArBtn = dialog.findViewById(R.id.get_start_ar);
+                startArBtn.setOnClickListener(this);
+                totalDistance.setText(legDirections.getDistance().getText());
 
-            List<String> list = new ArrayList<>();
-            list.add(StringUtils.BICYCLING);
-            list.add(StringUtils.WALKING);
-            list.add(StringUtils.DRIVING);
-            list.add(StringUtils.TRANSIT);
-            @SuppressLint("ResourceType") ArrayAdapter<String> adapter = new ArrayAdapter<>(this, travelSpiner.getId(),list);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            dialogButton = dialog.findViewById(R.id.confirm);
-            dialogButton.setOnClickListener(this);
-            travelSpiner.setAdapter(adapter);
+                //do show recycler
+                routeRecycler = dialog.findViewById(R.id.step_recyrcler);
+                routeRecycler.setLayoutManager(new WrapContentLinearLayoutManager(this));
+                routeAdapterRecycler = new RouteAdapterRecycler(legDirections.getSteps(), this);
+                routeRecycler.setAdapter(routeAdapterRecycler);
+                dialog.show();
+            }
+        }else if(view.getId() == cancelBtn.getId()){
+            isDialogDismiss = true;
+            dialog.dismiss();
+        }else if(view.getId() == startArBtn.getId()){
+            Intent intent = new Intent(this, MyArActivity.class);
+            startActivity(intent);
         }
     }
 
@@ -476,7 +500,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             try {
                                 status.startResolutionForResult(
                                         MapsActivity.this,
-                                        StringUtils.REQUEST_CHECK_SETTINGS);
+                                        FoodFinderUtils.REQUEST_CHECK_SETTINGS);
                             } catch (IntentSender.SendIntentException e) {
                                 e.printStackTrace();
                             }
@@ -520,7 +544,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         switch (requestCode) {
-            case StringUtils.REQUEST_CHECK_SETTINGS:
+            case FoodFinderUtils.REQUEST_CHECK_SETTINGS:
 //                this.finish();
                 switch (resultCode) {
                     case Activity.RESULT_OK:
@@ -535,8 +559,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         break;
                 }
                 break;
-            case StringUtils.PLACE_PICKER_REQUEST:
-                if(requestCode == StringUtils.PLACE_PICKER_REQUEST){
+            case FoodFinderUtils.PLACE_PICKER_REQUEST:
+                if(requestCode == FoodFinderUtils.PLACE_PICKER_REQUEST){
                     if(resultCode == RESULT_OK){
                         Place place = PlacePicker.getPlace(this, intent);
                         mLastKnownLocation.setLatitude(place.getLatLng().latitude);
@@ -549,9 +573,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
-        if(isRunning){
-            String origin = MapsActivity.mDeviceLocation.getLatitude()+","+MapsActivity.mDeviceLocation.getLongitude();
-            useService.getDirections(origin);
+        if(isDeviceLocationChanged){
+            String origin = mDeviceLocation.getLatitude()+","+mDeviceLocation.getLongitude();
+//            useService.getDirections(origin);
         }else{
             setLocation1FromLocation2(mDeviceLocation,location);
             updateMarker(new LatLng(location.getLatitude(),location.getLongitude()));
@@ -625,13 +649,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * @param i
      * @param l
      */
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        String travel = adapterView.getItemAtPosition(i).toString();
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
-    }
 }

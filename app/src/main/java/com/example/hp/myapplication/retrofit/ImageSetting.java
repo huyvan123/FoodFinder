@@ -3,7 +3,7 @@ package com.example.hp.myapplication.retrofit;
 import android.widget.ImageView;
 
 import com.example.hp.myapplication.LoadImageFood;
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 
 public class ImageSetting {
     private LoadImageFood loadImageFood;
@@ -24,12 +24,12 @@ public class ImageSetting {
     }
 
     private String getUrlForSearchPlacePhoto(String maxWidth, String photoReference){
-        StringBuilder builder = new StringBuilder(StringUtils.PLACES_API_BASE);
-        builder.append(StringUtils.TYPE_PLACE_PHOTO);
-        builder.append(StringUtils.TYPE_PHOTO);
+        StringBuilder builder = new StringBuilder(FoodFinderUtils.PLACES_API_BASE);
+        builder.append(FoodFinderUtils.TYPE_PLACE_PHOTO);
+        builder.append(FoodFinderUtils.TYPE_PHOTO);
         builder.append("?maxwidth=").append(maxWidth);
         builder.append("&photoreference=").append(photoReference);
-        builder.append("&key=").append(StringUtils.API_SERVER_KEY);
+        builder.append("&key=").append(FoodFinderUtils.API_SERVER_KEY);
         return builder.toString();
     }
 }

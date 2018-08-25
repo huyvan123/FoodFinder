@@ -22,7 +22,7 @@ import com.example.hp.myapplication.model.directions.Route;
 import com.example.hp.myapplication.model.directions.Step;
 import com.example.hp.myapplication.model.search.SearchResponse;
 import com.example.hp.myapplication.model.search.SearchResults;
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -45,18 +45,18 @@ import retrofit2.Response;
  */
 
 public class UseService implements View.OnClickListener{
-    private IGoodService iService;
     public static List<Marker> markerList = new ArrayList<>();;
+    public static List<SearchResults> searchResults = new ArrayList<>();
+    private static int defaultQuantity = 0;
+    private IGoodService iService;
     private GoogleMap mMap;
     private Button searchButton;
-    private Activity activity;
-    public static List<SearchResults> searchResults = new ArrayList<>();
+    private MapsActivity activity;
     private List<DetailResult> detailResults;
     private Bitmap bitmap;
     private List<Map<String,String>> requestURL;
     //count1 is request quantity, count2 to check search quantity, count3 check search detail quantity
     private int count1,count2, count3;
-    private static int defaultQuantity =0;
     private BottomSheetBehavior bottomSheetBehavior;
     private RecyclerView recyclerView;
     private MyAdapterRecycler adapterRecycler;
@@ -72,7 +72,7 @@ public class UseService implements View.OnClickListener{
      * @param recyclerView
      * @param adapterRecycler
      */
-    public UseService(GoogleMap googleMap, Button button, Activity activity, BottomSheetBehavior bottomSheetBehavior, RecyclerView recyclerView, MyAdapterRecycler adapterRecycler) {
+    public UseService(GoogleMap googleMap, Button button, MapsActivity activity, BottomSheetBehavior bottomSheetBehavior, RecyclerView recyclerView, MyAdapterRecycler adapterRecycler) {
         System.out.println("retrofit vao khoi tao");
         this.iService = PlaceApi.getIGoodService();
         this.mMap = googleMap;
@@ -95,7 +95,7 @@ public class UseService implements View.OnClickListener{
                 System.out.println("searchResults list size: "+ searchResults.size());
                 mMap.clear();
                 markerList.clear();
-                mMap.addMarker(new MarkerOptions().position(MapsActivity.marker.getPosition()).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+                mMap.addMarker(new MarkerOptions().position(activity.marker.getPosition()).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
                 markerList = new ArrayList<>();
                 Marker marker;
                 for (SearchResults searchResult: searchResults){
@@ -132,7 +132,7 @@ public class UseService implements View.OnClickListener{
      * @param placeId
      */
     private void getFoodStoreDetail(String placeId){
-        iService.getDetailResponse(placeId,StringUtils.API_SERVER_KEY).enqueue(new Callback<DetailResponse>() {
+        iService.getDetailResponse(placeId, FoodFinderUtils.API_SERVER_KEY).enqueue(new Callback<DetailResponse>() {
             @Override
             public void onResponse(Call<DetailResponse> call, Response<DetailResponse> response) {
                 count3++;
@@ -169,11 +169,11 @@ public class UseService implements View.OnClickListener{
     public void addRequest(String type, double lat, double lng, int radius, String keyWord){
         count1++;
         Map<String, String> map = new HashMap<>();
-        map.put(StringUtils.TYPE,type);
-        map.put(StringUtils.LOCATION,new StringBuilder(String.valueOf(lat)).append(",").append(String.valueOf(lng)).toString());
-        map.put(StringUtils.RADIUS,String.valueOf(radius));
-        map.put(StringUtils.KEYWORD,keyWord);
-        map.put(StringUtils.KEY,StringUtils.API_SERVER_KEY);
+        map.put(FoodFinderUtils.TYPE,type);
+        map.put(FoodFinderUtils.LOCATION,new StringBuilder(String.valueOf(lat)).append(",").append(String.valueOf(lng)).toString());
+        map.put(FoodFinderUtils.RADIUS,String.valueOf(radius));
+        map.put(FoodFinderUtils.KEYWORD,keyWord);
+        map.put(FoodFinderUtils.KEY, FoodFinderUtils.API_SERVER_KEY);
         requestURL.add(map);
     }
 
@@ -184,8 +184,8 @@ public class UseService implements View.OnClickListener{
         enableProgressBar();
         for (Map<String, String> url : requestURL){
             try {
-                iService.getSearchResponse(url.get(StringUtils.LOCATION),url.get(StringUtils.RADIUS),
-                        url.get(StringUtils.TYPE) , url.get(StringUtils.KEYWORD),url.get(StringUtils.KEY) ).enqueue(new Callback<SearchResponse>() {
+                iService.getSearchResponse(url.get(FoodFinderUtils.LOCATION),url.get(FoodFinderUtils.RADIUS),
+                        url.get(FoodFinderUtils.TYPE) , url.get(FoodFinderUtils.KEYWORD),url.get(FoodFinderUtils.KEY) ).enqueue(new Callback<SearchResponse>() {
                     @Override
                     public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
                         count2++;
@@ -200,11 +200,11 @@ public class UseService implements View.OnClickListener{
                         }
                         if(count1 == count2){
                             System.out.println("search result size: "+ searchResults.size());
-                            MapsActivity.tvSoluong.setText(String.valueOf(searchResults.size()));
+                            activity.tvSoluong.setText(String.valueOf(searchResults.size()));
                             setAllMarkerToMap();
                             detailResults.remove(detailResults.size() -1 );
                             adapterRecycler.notifyItemRemoved(detailResults.size());
-                            loadFoodStore(StringUtils.DEFAULT_QUANTITY,StringUtils.DEFAULT_BEGIN);
+                            loadFoodStore(FoodFinderUtils.DEFAULT_QUANTITY, FoodFinderUtils.DEFAULT_BEGIN);
                         }
                     }
 
@@ -219,11 +219,11 @@ public class UseService implements View.OnClickListener{
                                 activity.finish();
                             }else {
                                 System.out.println("search result size: " + searchResults.size());
-                                MapsActivity.tvSoluong.setText(String.valueOf(searchResults.size()));
+                                activity.tvSoluong.setText(String.valueOf(searchResults.size()));
                                 setAllMarkerToMap();
                                 detailResults.remove(detailResults.size() -1 );
                                 adapterRecycler.notifyItemRemoved(detailResults.size());
-                                loadFoodStore(StringUtils.DEFAULT_QUANTITY,StringUtils.DEFAULT_BEGIN);
+                                loadFoodStore(FoodFinderUtils.DEFAULT_QUANTITY, FoodFinderUtils.DEFAULT_BEGIN);
                             }
                         }
                     }
@@ -256,9 +256,9 @@ public class UseService implements View.OnClickListener{
                             detailResults.remove(detailResults.size() - 1);
                             adapterRecycler.notifyItemRemoved(detailResults.size());
                             //add load more
-                            loadFoodStore(StringUtils.DEFAULT_QUANTITY,detailResults.size());
+                            loadFoodStore(FoodFinderUtils.DEFAULT_QUANTITY,detailResults.size());
                         }
-                    },StringUtils.DEFAULT_TIME_WAITING);
+                    }, FoodFinderUtils.DEFAULT_TIME_WAITING);
                 }else{
                     Toast.makeText(activity, "Da tai het du lieu!", Toast.LENGTH_SHORT).show();
                 }
@@ -287,8 +287,8 @@ public class UseService implements View.OnClickListener{
 
     @Override
     public void onClick(View view) {
-        MapsActivity.isRunning = true;
-        MapsActivity.imageButton.setVisibility(View.VISIBLE);
+        activity.isDeviceLocationChanged = true;
+        activity.imageButton.setVisibility(View.VISIBLE);
         System.out.println("vao onclick");
         int position = recyclerView.getChildAdapterPosition(view);
         DetailResult detailResult = detailResults.get(position);
@@ -299,16 +299,16 @@ public class UseService implements View.OnClickListener{
         double lat = detailResult.getGeometry().getLocation().getLatitude();
         double lng = detailResult.getGeometry().getLocation().getLongtitude();
         mMap.addMarker(new MarkerOptions().position(new LatLng(lat,lng)).icon(BitmapDescriptorFactory.defaultMarker()));
-        MapsActivity.marker = mMap.addMarker(new MarkerOptions().position(new LatLng(MapsActivity.mDeviceLocation.getLatitude(),MapsActivity.mDeviceLocation.getLongitude()))
+        activity.marker = mMap.addMarker(new MarkerOptions().position(new LatLng(activity.mDeviceLocation.getLatitude(),activity.mDeviceLocation.getLongitude()))
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
         destination = detailResult.getGeometry().getLocation().getLatitude()+","+detailResult.getGeometry().getLocation().getLongtitude();
-        String origin = MapsActivity.mDeviceLocation.getLatitude()+","+MapsActivity.mDeviceLocation.getLongitude();
+        String origin = activity.mDeviceLocation.getLatitude()+","+activity.mDeviceLocation.getLongitude();
         getDirections(origin);
     }
 
     public void getDirections(String originLocation){
         System.out.println("vao get direction");
-        iService.getDirectionsResponse(originLocation,destination,StringUtils.DRIVING,StringUtils.API_CLIENT_KEY)
+        iService.getDirectionsResponse(originLocation,destination, FoodFinderUtils.DRIVING,FoodFinderUtils.VIETNAMESE, FoodFinderUtils.API_CLIENT_KEY)
                 .enqueue(new Callback<DirectionResponse>() {
                     @Override
                     public void onResponse(Call<DirectionResponse> call, Response<DirectionResponse> response) {
@@ -319,6 +319,7 @@ public class UseService implements View.OnClickListener{
                             PolylineOptions polylineOptions = null;
                             for (Route route: directionResponse.getRoutes()) {
                                 for (Leg leg: route.getLegs()) {
+                                    MapsActivity.legDirections = leg;
                                     for (Step step: leg.getSteps()) {
                                         polylineOptions = new PolylineOptions();
                                         String point = step.getPolyline().getPoint();

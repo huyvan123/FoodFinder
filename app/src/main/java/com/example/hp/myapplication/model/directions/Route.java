@@ -1,13 +1,13 @@
 package com.example.hp.myapplication.model.directions;
 
 import com.example.hp.myapplication.model.detail.ViewPort;
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class Route implements StringUtils {
+public class Route implements FoodFinderUtils {
     @SerializedName(BOUNDS)
     @Expose
     private ViewPort bound;

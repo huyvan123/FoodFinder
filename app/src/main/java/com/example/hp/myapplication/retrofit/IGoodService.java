@@ -23,6 +23,7 @@ public interface IGoodService{
     public static final String KEY = "key";
     public static final String PLACEID = "placeid";
     public static final String LOCATION = "location";
+    public static final String LANGUAGE = "language";
 
 
     @GET(TYPE_PLACE+TYPE_SEARCH+OUT_JSON)
@@ -32,5 +33,5 @@ public interface IGoodService{
     Call<DetailResponse> getDetailResponse(@Query(PLACEID) String placeID, @Query(KEY) String apiKey );
 
     @GET(TYPE_DIRECTIONS+OUT_JSON)
-    Call<DirectionResponse> getDirectionsResponse(@Query(ORIGIN) String origin, @Query(DESTINATION) String destination, @Query(MODE) String mode, @Query(KEY) String apiKey);
+    Call<DirectionResponse> getDirectionsResponse(@Query(ORIGIN) String origin, @Query(DESTINATION) String destination, @Query(MODE) String mode, @Query(LANGUAGE) String language, @Query(KEY) String apiKey);
 }

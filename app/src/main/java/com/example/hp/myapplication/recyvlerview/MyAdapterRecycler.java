@@ -13,7 +13,7 @@ import android.widget.TextView;
 import com.example.hp.myapplication.ILoadmore;
 import com.example.hp.myapplication.R;
 import com.example.hp.myapplication.model.detail.DetailResult;
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.example.hp.myapplication.model.utils.Validation;
 import com.example.hp.myapplication.mywidget.LoadingViewHolder;
 import com.example.hp.myapplication.retrofit.ImageSetting;
@@ -79,7 +79,7 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
                         .inflate(R.layout.content_loading, viewGroup, false);
                 return new LoadingViewHolder(view);
             }
-            return null;
+            return new FoodViewHolder(viewGroup);
         }
 
         @Override
@@ -92,22 +92,22 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
                     ImageSetting imageSetting = new ImageSetting(foodViewHolder.icon);
                     if((foodStore.getPhotoURLs()) != null){
                         System.out.println("image vao khac null");
-                        imageSetting.setPhoto(StringUtils.MAXWIDTH_IMAGE,foodStore.getPhotoURLs().get(0).getPhotoReference(), true);
+                        imageSetting.setPhoto(FoodFinderUtils.MAXWIDTH_IMAGE,foodStore.getPhotoURLs().get(0).getPhotoReference(), true);
                     }else {
                         System.out.println("image vao null");
-                        imageSetting.setPhoto(StringUtils.MAXWIDTH_IMAGE,foodStore.getIconURL(),false);
+                        imageSetting.setPhoto(FoodFinderUtils.MAXWIDTH_IMAGE,foodStore.getIconURL(),false);
                     }
                     //name
                     if(!Validation.isStringEmpty(foodStore.getName())) {
                         foodViewHolder.foodName.setText(foodStore.getName());
                     }else{
-                        foodViewHolder.foodName.setText(StringUtils.NA);
+                        foodViewHolder.foodName.setText(FoodFinderUtils.NA);
                     }
                     //address
                     if(!Validation.isStringEmpty(foodStore.getFormatedAddress())) {
                         foodViewHolder.address.setText(foodStore.getFormatedAddress());
                     }else{
-                        foodViewHolder.address.setText(StringUtils.NA);
+                        foodViewHolder.address.setText(FoodFinderUtils.NA);
                     }
                     //phone number
                     if(!Validation.isStringEmpty(foodStore.getFormatedPhoneNumber()) && !Validation.isStringEmpty(foodStore.getInternationalPhoneNumber())){
@@ -117,19 +117,19 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
                     }else if(!Validation.isStringEmpty(foodStore.getInternationalPhoneNumber())){
                         foodViewHolder.phone.setText(foodStore.getInternationalPhoneNumber());
                     }else{
-                        foodViewHolder.phone.setText(StringUtils.NA);
+                        foodViewHolder.phone.setText(FoodFinderUtils.NA);
                     }
                     //rating
                     if(!Validation.isStringEmpty(foodStore.getRating())) {
                         foodViewHolder.rating.setText(foodStore.getRating());
                     }else{
-                        foodViewHolder.rating.setText(StringUtils.NA);
+                        foodViewHolder.rating.setText(FoodFinderUtils.NA);
                     }
                     if(foodStore.getOpeningHour() != null){
                         if(!Validation.isStringEmpty(foodStore.getOpeningHour().getOpenNow())){
                             foodViewHolder.openNow.setText(foodStore.getOpeningHour().getOpenNow());
                         }else{
-                            foodViewHolder.openNow.setText(StringUtils.NA);
+                            foodViewHolder.openNow.setText(FoodFinderUtils.NA);
                         }
                         if(!Validation.isListEmpty(foodStore.getOpeningHour().getOpenHourInWeek())){
                             String openTime = "";
@@ -137,21 +137,21 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
                                 openTime += s + "\n";
                             }
                             if(openTime.trim().equals("")){
-                                foodViewHolder.openTime.setText(StringUtils.NA);
+                                foodViewHolder.openTime.setText(FoodFinderUtils.NA);
                             }else{
                                 foodViewHolder.openTime.setText(openTime);
                             }
                         }else{
-                            foodViewHolder.openTime.setText(StringUtils.NA);
+                            foodViewHolder.openTime.setText(FoodFinderUtils.NA);
                         }
                     }else {
-                        foodViewHolder.openNow.setText(StringUtils.NA);
-                        foodViewHolder.openTime.setText(StringUtils.NA);
+                        foodViewHolder.openNow.setText(FoodFinderUtils.NA);
+                        foodViewHolder.openTime.setText(FoodFinderUtils.NA);
                     }
                     if(!Validation.isStringEmpty(foodStore.getWebsite())){
                         foodViewHolder.website.setText(foodStore.getWebsite());
                     }else{
-                        foodViewHolder.website.setText(StringUtils.NA);
+                        foodViewHolder.website.setText(FoodFinderUtils.NA);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

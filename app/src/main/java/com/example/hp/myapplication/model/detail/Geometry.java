@@ -3,9 +3,9 @@ package com.example.hp.myapplication.model.detail;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 
-public class Geometry implements StringUtils {
+public class Geometry implements FoodFinderUtils {
     @SerializedName(LOCATION)
     @Expose
     private LocationCreator location;

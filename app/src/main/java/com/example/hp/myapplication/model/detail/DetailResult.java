@@ -1,12 +1,12 @@
 package com.example.hp.myapplication.model.detail;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class DetailResult implements StringUtils {
+public class DetailResult implements FoodFinderUtils {
     @SerializedName(FORMATTED_ADDRESS)
     @Expose
     private String formatedAddress;

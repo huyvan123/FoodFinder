@@ -1,6 +1,7 @@
 package arcore;
 
 import android.Manifest;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,11 +10,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Button;
 
 import com.example.hp.myapplication.R;
 import com.google.ar.core.ArCoreApk;
+import com.google.ar.core.Camera;
 import com.google.ar.core.Session;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
@@ -22,6 +25,12 @@ import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 
 public class MyArActivity extends AppCompatActivity {
+
+    //
+    private Camera mCamera;
+    private SurfaceHolder surfaceHolder;
+    private boolean isCameraViewOn = false;
+//    private Aug
 
     private static final int PERMISSIONS_REQUEST_ACCESS_CAMERA = 2;
     private Button mArButton;
@@ -88,8 +97,9 @@ public class MyArActivity extends AppCompatActivity {
     }
 
     private void getCamerePermission(){
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED){
-            maybeEnableArButton();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//            maybeEnableArButton();
         }else{
             ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_ACCESS_CAMERA);
         }

@@ -5,9 +5,9 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-import com.example.hp.myapplication.model.utils.StringUtils;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 
-public class OpeningHour implements StringUtils{
+public class OpeningHour implements FoodFinderUtils {
     @SerializedName(OPEN_NOW)
     @Expose
     private boolean openNow;
