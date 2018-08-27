@@ -414,6 +414,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isDialogDismiss = true;
             dialog.dismiss();
         }else if(view.getId() == startArBtn.getId()){
+            //ar would ve here
             Intent intent = new Intent(this, MyArActivity.class);
             startActivity(intent);
         }
@@ -571,6 +572,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * 4 methods below are override from locationListener
+     * @param location
+     */
     @Override
     public void onLocationChanged(Location location) {
         if(isDeviceLocationChanged){
