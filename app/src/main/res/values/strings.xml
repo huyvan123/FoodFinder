@@ -6,4 +6,8 @@
     <string name="menu_settings">menu_settings</string>
     <string name="search">Tìm</string>
     <string name="key_binding_default_toolbar_name">Modal-Toolbar-Title</string>
+    <!--permission-->
+    <string name="permissions_denied">The Wikitude SDK needs the following permissions to enable an AR experience:</string>
+    <string name="permission_rationale_text">The Wikitude SDK needs the following permissions to enable an AR experience:</string>
+    <string name="permission_rationale_title">Wikitude Permissions</string>
 </resources>

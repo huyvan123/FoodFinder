@@ -414,9 +414,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isDialogDismiss = true;
             dialog.dismiss();
         }else if(view.getId() == startArBtn.getId()){
-            //ar would ve here
-            Intent intent = new Intent(this, MyArActivity.class);
-            startActivity(intent);
+            //ar would be here
+            if(mDeviceLocation == null){
+                System.out.println("DIVICE LOCATION IS NULLLLLLLLL");
+            }else {
+                System.out.println("DIVICE LOCATION: " + mDeviceLocation.getLatitude() + " ," + mDeviceLocation.getLongitude());
+
+                Intent intent = new Intent(this, MyArActivity.class);
+                intent.putExtra("log", mDeviceLocation.getLongitude());
+                intent.putExtra("la", mDeviceLocation.getLatitude());
+                intent.putExtra("acc", mDeviceLocation.getAccuracy());
+                startActivity(intent);
+            }
         }
     }
 

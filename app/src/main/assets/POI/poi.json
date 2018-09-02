@@ -1,0 +1,51 @@
+[
+  {
+    "category_name": "Point of Interest",
+    "food_store": [
+      {
+        "name": "Poi At Location",
+        "path": "POIAtLocation/index.html",
+        "requiredFeatures": [
+          "geo"
+        ],
+        "startupConfiguration": {
+          "camera_resolution": "auto",
+          "camera_position": "back"
+        }
+      },
+      {
+        "name": "Poi With Label",
+        "path": "POIWithLabel/index.html",
+        "requiredFeatures": [
+          "geo"
+        ],
+        "startupConfiguration": {
+          "camera_resolution": "auto",
+          "camera_position": "back"
+        }
+      },
+      {
+        "name": "Multiple Pois",
+        "path": "MultiplePOI/index.html",
+        "requiredFeatures": [
+          "geo"
+        ],
+        "startupConfiguration": {
+          "camera_resolution": "auto",
+          "camera_position": "back"
+        }
+      },
+      {
+        "name": "Selecting Pois",
+        "path": "SelectingPOI/index.html",
+        "requiredFeatures": [
+          "geo"
+        ],
+        "startupConfiguration": {
+          "camera_resolution": "auto",
+          "camera_position": "back"
+        }
+      }
+    ]
+  }
+]

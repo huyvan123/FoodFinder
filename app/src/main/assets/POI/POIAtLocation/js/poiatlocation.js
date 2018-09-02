@@ -10,12 +10,18 @@ var World = {
 	loadPoisFromJsonData: function loadPoisFromJsonDataFn(poiData) {
 
 		/*
-			The example Image Recognition already explained how images are loaded and displayed in the augmented reality view. This sample loads an AR.ImageResource when the World variable was defined. It will be reused for each marker that we will create afterwards.
+			The example Image Recognition already explained how images are loaded
+			 and displayed in the augmented reality view. This sample loads an
+			 AR.ImageResource when the World variable was defined. It will be reused for each marker that we will create afterwards.
 		*/
 		World.markerDrawable_idle = new AR.ImageResource("assets/marker_idle.png");
 
 		/*
-			For creating the marker a new object AR.GeoObject will be created at the specified geolocation. An AR.GeoObject connects one or more AR.GeoLocations with multiple AR.Drawables. The AR.Drawables can be defined for multiple targets. A target can be the camera, the radar or a direction indicator. Both the radar and direction indicators will be covered in more detail in later examples.
+			For creating the marker a new object AR.GeoObject will be created at
+			the specified geolocation. An AR.GeoObject connects one or more AR.GeoLocations
+			 with multiple AR.Drawables. The AR.Drawables can be defined for multiple targets.
+			  A target can be the camera, the radar or a direction indicator. Both the radar
+			  and direction indicators will be covered in more detail in later examples.
 		*/
 		var markerLocation = new AR.GeoLocation(poiData.latitude, poiData.longitude, poiData.altitude);
 		var markerImageDrawable_idle = new AR.ImageDrawable(World.markerDrawable_idle, 2.5, {
@@ -59,7 +65,7 @@ var World = {
 			// creates a poi object with a random location near the user's location
 			var poiData = {
 				"id": 1,
-				"longitude": (lon + (Math.random() / 5 - 0.1)),
+				"longitude":(lon + (Math.random() / 5 - 0.1)),
 				"latitude": (lat + (Math.random() / 5 - 0.1)),
 				"altitude": 100.0
 			};
