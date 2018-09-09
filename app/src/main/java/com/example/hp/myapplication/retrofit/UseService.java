@@ -3,6 +3,7 @@ package com.example.hp.myapplication.retrofit;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Handler;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.widget.RecyclerView;
@@ -292,6 +293,7 @@ public class UseService implements View.OnClickListener{
         System.out.println("vao onclick");
         int position = recyclerView.getChildAdapterPosition(view);
         DetailResult detailResult = detailResults.get(position);
+        MapsActivity.mChoseLocationDetail = detailResult;
         if(bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         }

@@ -10,7 +10,7 @@ android {
         targetCompatibility 1.8
     }
     defaultConfig {
-        applicationId "com.example.hp.myapplication"
+        applicationId "com.example.hp"
         minSdkVersion 19
         targetSdkVersion 28
         versionCode 1

@@ -113,7 +113,11 @@ Marker.prototype.getOnClickTrigger = function(marker) {
 };
 
 /*
-    Property Animations allow constant changes to a numeric value/property of an object, dependent on start-value, end-value and the duration of the animation. Animations can be seen as functions defining the progress of the change on the value. The Animation can be parametrized via easing curves.
+    Property Animations allow constant changes to
+    a numeric value/property of an object, dependent on start-value,
+     end-value and the duration of the animation. Animations can be
+      seen as functions defining the progress of the change on the value.
+       The Animation can be parametrized via easing curves.
 */
 
 Marker.prototype.setSelected = function(marker) {

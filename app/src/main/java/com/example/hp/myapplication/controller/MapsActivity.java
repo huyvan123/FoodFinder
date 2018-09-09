@@ -39,6 +39,7 @@ import android.widget.Toast;
 import com.example.hp.myapplication.PermissionAccess;
 import com.example.hp.myapplication.R;
 import com.example.hp.myapplication.WrapContentLinearLayoutManager;
+import com.example.hp.myapplication.model.detail.DetailResult;
 import com.example.hp.myapplication.model.directions.Leg;
 import com.example.hp.myapplication.model.directions.Step;
 import com.example.hp.myapplication.model.utils.FoodFinderUtils;
@@ -90,8 +91,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         View.OnClickListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnPoiClickListener, GoogleMap.OnMyLocationButtonClickListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
+    public static DetailResult mChoseLocationDetail = null;
     public Marker marker;
-    public Location mDeviceLocation = null;
+    public static Location mDeviceLocation = null;
     public boolean isDeviceLocationChanged = false;
     public ImageButton imageButton;
     public TextView tvSoluong;
@@ -106,7 +108,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private boolean mLocationPermissionGranted;
     private GeoDataClient mGeoDataClient;
-    //2 locations to check multiclick on 1 loaction
+    //2 locations to check multi click on 1 location
     private Location mLastKnownLocation, mBeforeLocation;
     private BottomSheetBehavior bottomSheetBehavior;
     private Dialog dialog;
@@ -419,11 +421,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 System.out.println("DIVICE LOCATION IS NULLLLLLLLL");
             }else {
                 System.out.println("DIVICE LOCATION: " + mDeviceLocation.getLatitude() + " ," + mDeviceLocation.getLongitude());
-
+                System.out.println("DIVICE LOCATION 1: " + mChoseLocationDetail.getGeometry().getLocation().getLatitude()
+                        + " ," + mChoseLocationDetail.getGeometry().getLocation().getLongtitude());
                 Intent intent = new Intent(this, MyArActivity.class);
-                intent.putExtra("log", mDeviceLocation.getLongitude());
-                intent.putExtra("la", mDeviceLocation.getLatitude());
-                intent.putExtra("acc", mDeviceLocation.getAccuracy());
                 startActivity(intent);
             }
         }
@@ -654,13 +654,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             location1.setLongitude(location2.getLongitude());
         }
     }
-
-    /**
-     * on item selected
-     * i is position
-     * @param adapterView
-     * @param view
-     * @param i
-     * @param l
-     */
 }

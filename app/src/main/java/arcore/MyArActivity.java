@@ -1,37 +1,19 @@
 package arcore;
 
-import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.SurfaceHolder;
-import android.view.View;
 import android.webkit.WebView;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.hp.myapplication.R;
-import com.google.ar.core.ArCoreApk;
-import com.google.ar.core.Camera;
-import com.google.ar.core.Session;
-import com.google.ar.core.exceptions.UnavailableApkTooOldException;
-import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
-import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
-import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.example.hp.myapplication.controller.MapsActivity;
+import com.example.hp.myapplication.model.detail.DetailResult;
 import com.wikitude.architect.ArchitectStartupConfiguration;
 import com.wikitude.architect.ArchitectView;
 import com.wikitude.common.permission.PermissionManager;
@@ -57,7 +39,7 @@ public class MyArActivity extends AppCompatActivity{
     public void getStoreData(){
         final String json = FoodJsonParser.loadStringFromAssets(MyArActivity.this, foodDefinitionsPath);
         categories = FoodJsonParser.getCategoriesFromJsonString(json);
-        final FoodStoreData foodStoreData = categories.get(0).getSamples().get(3);
+        final FoodStoreData foodStoreData = categories.get(0).getSamples().get(1);
         final String[] permissions = UtilsPermmission.getPermissionsForArFeatures(foodStoreData.getArFeatures());
 
         permissionManager.checkPermissions(MyArActivity.this, permissions, PermissionManager.WIKITUDE_PERMISSION_REQUEST, new PermissionManager.PermissionManagerCallback() {
@@ -110,16 +92,32 @@ public class MyArActivity extends AppCompatActivity{
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         architectView.onPostCreate();
-        Intent intent = getIntent();
+//        Intent intent = getIntent();
 //        Location location = (Location) intent.getSerializableExtra("location");
 //        if(location == null){
 //            System.out.println("DIVICE LOCATION IS NULLLLLLLLL");
 //        }else {
 //            System.out.println("DIVICE LOCATION: " + location.getLatitude() + " ," + location.getLongitude());
 //        }
-        architectView.setLocation(intent.getDoubleExtra("la",0.0),intent.getDoubleExtra("log",0.0)
-                ,intent.getDoubleExtra("acc",0.0));
+        DetailResult detailResult = MapsActivity.mChoseLocationDetail;
+        String id = detailResult.getId();
+        String title = detailResult.getName();
+        String description = detailResult.getFormatedAddress();
+        Double lat = detailResult.getGeometry().getLocation().getLatitude();
+        Double lng = detailResult.getGeometry().getLocation().getLongtitude();
+        Double height = 2.5;
+        StringBuilder builder = new StringBuilder("World.setMarkerLocation(");
+        builder.append("'").append(id).append("'");
+        builder.append(",").append("'").append(title).append("'");
+        builder.append(",").append("'").append(description).append("'");
+        builder.append(",").append(height);
+        builder.append(",").append(lat);
+        builder.append(",").append(lng);
+        builder.append(")");
+        Location mDeviceLocation = MapsActivity.mDeviceLocation;
         try {
+            architectView.callJavascript(builder.toString());
+            architectView.setLocation(mDeviceLocation.getLatitude(),mDeviceLocation.getLongitude(),mDeviceLocation.getAccuracy());
             /*
              * Loads the AR-Experience, it may be a relative path from assets,
              * an absolute path (file://) or a server url.
@@ -128,7 +126,7 @@ public class MyArActivity extends AppCompatActivity{
              * an ArchitectWorldLoadedListener can be registered.
              */
             architectView.load(FOOD_STORE_ROOT + arExperience);
-        } catch (IOException e) {
+        } catch (Exception e) {
             Toast.makeText(this, getString(R.string.error_loading_ar_experience), Toast.LENGTH_SHORT).show();
         }
     }
