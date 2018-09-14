@@ -2,7 +2,7 @@ package com.example.hp.myapplication.retrofit;
 
 import android.widget.ImageView;
 
-import com.example.hp.myapplication.LoadImageFood;
+import com.example.hp.myapplication.recyvlerview.LoadImageFood;
 import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 
 public class ImageSetting {

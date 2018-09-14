@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.example.hp.myapplication.R;
 import com.example.hp.myapplication.controller.MapsActivity;
 import com.example.hp.myapplication.model.detail.DetailResult;
+import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.wikitude.architect.ArchitectStartupConfiguration;
 import com.wikitude.architect.ArchitectView;
 import com.wikitude.common.permission.PermissionManager;
@@ -28,12 +29,16 @@ public class MyArActivity extends AppCompatActivity{
     private String arExperience;
     private  List<FoodStoreCategory> categories;
     private  final PermissionManager permissionManager = ArchitectView.getPermissionManager();
-    protected ArchitectView architectView;
+    public static ArchitectView architectView;
+    private boolean isPermissionGranted = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getStoreData();
+        FoodStoreData foodStoreData = (FoodStoreData) getIntent().getSerializableExtra(FoodFinderUtils.FOOD_STORE_DATA);
+        show(foodStoreData);
+        isPermissionGranted = true;
+
     }
 
     public void getStoreData(){
@@ -45,6 +50,7 @@ public class MyArActivity extends AppCompatActivity{
         permissionManager.checkPermissions(MyArActivity.this, permissions, PermissionManager.WIKITUDE_PERMISSION_REQUEST, new PermissionManager.PermissionManagerCallback() {
             @Override
             public void permissionsGranted(int requestCode) {
+                isPermissionGranted = true;
                 show(foodStoreData);
             }
 
@@ -72,6 +78,10 @@ public class MyArActivity extends AppCompatActivity{
         });
     }
 
+    private void getPermission(){
+
+    }
+
     private void show(FoodStoreData foodStoreData){
         WebView.setWebContentsDebuggingEnabled(true);
         arExperience = foodStoreData.getPath();
@@ -86,12 +96,16 @@ public class MyArActivity extends AppCompatActivity{
         architectView = new ArchitectView(this);
         architectView.onCreate(config); // create ArchitectView with configuration
         setContentView(architectView);
+//        if(!isPermissionGranted){
+//            setArchitecView();
+//        }
     }
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        architectView.onPostCreate();
+        if (isPermissionGranted) {
+            architectView.onPostCreate();
 //        Intent intent = getIntent();
 //        Location location = (Location) intent.getSerializableExtra("location");
 //        if(location == null){
@@ -99,6 +113,11 @@ public class MyArActivity extends AppCompatActivity{
 //        }else {
 //            System.out.println("DIVICE LOCATION: " + location.getLatitude() + " ," + location.getLongitude());
 //        }
+            setArchitecView();
+        }
+    }
+
+    private void setArchitecView(){
         DetailResult detailResult = MapsActivity.mChoseLocationDetail;
         String id = detailResult.getId();
         String title = detailResult.getName();
@@ -117,7 +136,7 @@ public class MyArActivity extends AppCompatActivity{
         Location mDeviceLocation = MapsActivity.mDeviceLocation;
         try {
             architectView.callJavascript(builder.toString());
-            architectView.setLocation(mDeviceLocation.getLatitude(),mDeviceLocation.getLongitude(),mDeviceLocation.getAccuracy());
+            architectView.setLocation(mDeviceLocation.getLatitude(), mDeviceLocation.getLongitude(), mDeviceLocation.getAccuracy());
             /*
              * Loads the AR-Experience, it may be a relative path from assets,
              * an absolute path (file://) or a server url.
@@ -130,17 +149,20 @@ public class MyArActivity extends AppCompatActivity{
             Toast.makeText(this, getString(R.string.error_loading_ar_experience), Toast.LENGTH_SHORT).show();
         }
     }
-
     @Override
     protected void onResume() {
         super.onResume();
-        architectView.onResume(); // Mandatory ArchitectView lifecycle call
+        if (isPermissionGranted) {
+            architectView.onResume(); // Mandatory ArchitectView lifecycle call
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        architectView.onPause(); // Mandatory ArchitectView lifecycle call
+        if(isPermissionGranted) {
+            architectView.onPause(); // Mandatory ArchitectView lifecycle call
+        }
     }
 
     @Override
@@ -153,7 +175,9 @@ public class MyArActivity extends AppCompatActivity{
          *
          * This should be called before architectView.onDestroy
          */
-        architectView.clearCache();
-        architectView.onDestroy(); // Mandatory ArchitectView lifecycle call
+        if (isPermissionGranted) {
+            architectView.clearCache();
+            architectView.onDestroy(); // Mandatory ArchitectView lifecycle call
+        }
     }
 }

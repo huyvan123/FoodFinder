@@ -1,4 +1,4 @@
-package com.example.hp.myapplication;
+package com.example.hp.myapplication.recyvlerview;
 
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
@@ -7,6 +7,10 @@ import android.util.Log;
 
 public class WrapContentLinearLayoutManager extends LinearLayoutManager {
 
+
+    public WrapContentLinearLayoutManager(Context context, int orientation, boolean reverseLayout) {
+        super(context, orientation, reverseLayout);
+    }
 
     public WrapContentLinearLayoutManager(Context context) {
         super(context);

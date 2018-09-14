@@ -1,4 +1,4 @@
-package com.example.hp.myapplication;
+package com.example.hp.myapplication.recyvlerview;
 
 import android.content.Context;
 import android.util.AttributeSet;

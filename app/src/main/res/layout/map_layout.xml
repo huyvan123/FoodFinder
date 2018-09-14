@@ -5,30 +5,67 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent">
+
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         tools:context=".controller.MapsActivity">
 
     </fragment>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <fragment
+            android:id="@+id/place_autocomplete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+            />
+    </LinearLayout>
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_margin="5dp"-->
+        <!--android:orientation="horizontal">-->
+
+        <!--<EditText-->
+            <!--android:id="@+id/editText"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="4"-->
+            <!--android:hint="Search Location Here" />-->
+
+
+        <!--<Button-->
+            <!--android:id="@+id/search_button"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="0.5"-->
+            <!--android:onClick="onMapSearch"-->
+            <!--android:text="Search" />-->
+
+    <!--</LinearLayout>-->
     <Button
         android:id="@+id/search_store"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right|top"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:text="@string/search"
-        android:layout_marginTop="10dp"
-        android:paddingRight="10dp"/>
+        android:layout_marginTop="430dp"
+        android:layout_marginLeft="20dp" />
+
     <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/imageButton"
-        android:layout_centerVertical="false"
-        android:layout_marginTop="400dp"
-        android:layout_marginLeft="280dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_centerHorizontal="false"
-        android:src="@drawable/ic_action_name"/>
+        android:layout_centerVertical="false"
+        android:layout_marginLeft="300dp"
+        android:layout_marginTop="360dp"
+        android:background="@android:color/darker_gray"
+        android:src="@android:drawable/ic_menu_directions" />
 </RelativeLayout>

@@ -3,8 +3,10 @@ package com.example.hp.myapplication.controller;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -16,37 +18,34 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.Spinner;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.hp.myapplication.PermissionAccess;
+import com.example.hp.myapplication.recyvlerview.PermissionAccess;
 import com.example.hp.myapplication.R;
-import com.example.hp.myapplication.WrapContentLinearLayoutManager;
+import com.example.hp.myapplication.recyvlerview.WrapContentLinearLayoutManager;
 import com.example.hp.myapplication.model.detail.DetailResult;
 import com.example.hp.myapplication.model.directions.Leg;
-import com.example.hp.myapplication.model.directions.Step;
 import com.example.hp.myapplication.model.utils.FoodFinderUtils;
 import com.example.hp.myapplication.recyvlerview.MyAdapterRecycler;
 import com.example.hp.myapplication.recyvlerview.RouteAdapterRecycler;
 import com.example.hp.myapplication.retrofit.UseService;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
@@ -57,31 +56,37 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PointOfInterest;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.wikitude.architect.ArchitectView;
+import com.wikitude.common.permission.PermissionManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import arcore.FoodJsonParser;
+import arcore.FoodStoreCategory;
+import arcore.FoodStoreData;
 import arcore.MyArActivity;
+import arcore.UtilsPermmission;
 
 import static android.location.LocationManager.GPS_PROVIDER;
-import static com.example.hp.myapplication.PermissionAccess.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
+import static com.example.hp.myapplication.recyvlerview.PermissionAccess.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION;
 
 /**
  * 01/07/2018
@@ -89,7 +94,7 @@ import static com.example.hp.myapplication.PermissionAccess.PERMISSIONS_REQUEST_
  */
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,
         View.OnClickListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnPoiClickListener, GoogleMap.OnMyLocationButtonClickListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        LocationListener {
 
     public static DetailResult mChoseLocationDetail = null;
     public Marker marker;
@@ -99,15 +104,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public TextView tvSoluong;
     public static Leg legDirections;
     private GoogleMap mMap;
-    private CameraPosition mCameraPosition;
     private Button searchStoreBtn, dialogButton, cancelBtn, startArBtn;
     private GoogleApiClient mGoogleApiClient;
     private LocationManager manager;
     private FusedLocationProviderClient mFusedClientProvider ;
     private boolean isDialogDismiss;
+    private PlaceAutocompleteFragment placeAutoComplete;
 
     private boolean mLocationPermissionGranted;
-    private GeoDataClient mGeoDataClient;
     //2 locations to check multi click on 1 location
     private Location mLastKnownLocation, mBeforeLocation;
     private BottomSheetBehavior bottomSheetBehavior;
@@ -165,6 +169,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDeviceLocation.setLatitude(0.0);
         legDirections = new Leg();
         recyclerView = findViewById(R.id.RecycleviewList);
+        recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(this));
+//        recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         tvSoluong = findViewById(R.id.so_luong);
         searchStoreBtn = findViewById(R.id.search_store);
         searchStoreBtn.setOnClickListener(this);
@@ -172,16 +178,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         imageButton.setVisibility(View.GONE);
         imageButton.setOnClickListener(this);
         mFusedClientProvider = LocationServices.getFusedLocationProviderClient(this);
-        mGeoDataClient = Places.getGeoDataClient(this);
         if(savedInstanceState != null){
             mLastKnownLocation = savedInstanceState.getParcelable(FoodFinderUtils.KEY_LOCATION);
-            mCameraPosition = savedInstanceState.getParcelable(FoodFinderUtils.KEY_CAMERA_POSITION);
         }
+        //set autocomplete search bar
+        setPlaceAutoComplete();
         //enable google map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
         mapFragment.getMapAsync(this);
+    }
+
+
+    private void setPlaceAutoComplete(){
+//        placeAutoComplete = (getSupportFragmentManager().findFragmentById(R.id.place_autocomplete));
+        placeAutoComplete = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete);
+        placeAutoComplete.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                LatLng latLng = place.getLatLng();
+                updateMarker(latLng);
+            }
+
+            @Override
+            public void onError(Status status) {
+                Log.d("Maps", "An error occurred: " + status);
+            }
+        });
+
     }
 
 
@@ -256,7 +281,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(mLocationPermissionGranted){
                 System.out.println("key_01 vao set my location");
                 mMap.setMyLocationEnabled(true);
+//                mMap.setPadding();
                 mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                setUpMap();
             }else{
                 mMap.setMyLocationEnabled(false);
                 mMap.getUiSettings().setMyLocationButtonEnabled(false);
@@ -265,6 +292,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }catch (Exception ex){
             Log.e("Excption: %s", ex.getMessage());
+        }
+    }
+
+    private void setUpMap() {
+
+        // Find myLocationButton view
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        @SuppressLint("ResourceType") View myLocationButton = mapFragment.getView().findViewById(0x2);
+
+        if (myLocationButton != null && myLocationButton.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+            // location button is inside of RelativeLayout
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) myLocationButton.getLayoutParams();
+
+            // Align it to - parent BOTTOM|LEFT
+            params.addRule(15);
+            params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+            params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+
+            // Update margins, set to 10dp
+            final int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10,
+                    getResources().getDisplayMetrics());
+            params.setMargins(margin, margin, margin, margin);
+
+            myLocationButton.setLayoutParams(params);
         }
     }
 
@@ -351,11 +403,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         updateMarker(latLng);
     }
 
+    /**
+     * update marker
+     * @param latLng
+     */
     private void updateMarker(LatLng latLng){
+        //remove current marker location
         if(marker != null){
             marker.remove();
         }
-        //set current location
+        //set current marker location and move camera
         mLastKnownLocation.setLatitude(latLng.latitude);
         mLastKnownLocation.setLongitude(latLng.longitude);
         marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
@@ -368,11 +425,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onClick(View view) {
+        //on tìm clicked
         if(view.getId() == R.id.search_store){
             isDialogDismiss = false;
             isDeviceLocationChanged = false;
-            imageButton.setVisibility(View.GONE);
             if(!isLocationTheSame(mBeforeLocation,mLastKnownLocation)) {
+                imageButton.setVisibility(View.GONE);
                 setLocation1FromLocation2(mBeforeLocation,mLastKnownLocation);
                 UseService.searchResults = new ArrayList<>();
                 bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
@@ -387,10 +445,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 useService.action();
             }else{
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+//                imageButton.setVisibility(View.VISIBLE);
             }
+            //cancel button at direction clicked
         }else if(view.getId() == dialogButton.getId()){
             dialog.cancel();
             this.finishAffinity();
+            //on view direction button clicked
         }else if(view.getId() == imageButton.getId()){
             if(isDialogDismiss) {
                 dialog.show();
@@ -423,12 +484,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 System.out.println("DIVICE LOCATION: " + mDeviceLocation.getLatitude() + " ," + mDeviceLocation.getLongitude());
                 System.out.println("DIVICE LOCATION 1: " + mChoseLocationDetail.getGeometry().getLocation().getLatitude()
                         + " ," + mChoseLocationDetail.getGeometry().getLocation().getLongtitude());
-                Intent intent = new Intent(this, MyArActivity.class);
-                startActivity(intent);
+                checkArPermission();
+//                Intent intent = new Intent(this, MyArActivity.class);
+//                startActivity(intent);
             }
         }
     }
 
+    /**
+     * on marker clicked
+     * @param marker
+     * @return
+     */
     @Override
     public boolean onMarkerClick(Marker marker) {
         Geocoder geocoder =  new Geocoder(this);
@@ -447,11 +514,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return true;
     }
 
+    /**
+     * on POI clicked
+     * @param pointOfInterest
+     */
     @Override
     public void onPoiClick(PointOfInterest pointOfInterest) {
         Toast.makeText(this, pointOfInterest.name, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * on my location clicked
+     * @return
+     */
     @Override
     public boolean onMyLocationButtonClick() {
         if(marker !=null){
@@ -530,20 +605,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
     }
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
 
     /**
      * on activity result
@@ -587,29 +648,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onLocationChanged(Location location) {
-        if(isDeviceLocationChanged){
-            String origin = mDeviceLocation.getLatitude()+","+mDeviceLocation.getLongitude();
-//            useService.getDirections(origin);
-        }else{
-            setLocation1FromLocation2(mDeviceLocation,location);
-            updateMarker(new LatLng(location.getLatitude(),location.getLongitude()));
-        }
-        System.out.println("key_01 loaction changed");
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String s) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String s) {
-
+//        try {
+//            if (isDeviceLocationChanged) {
+//                String origin = mDeviceLocation.getLatitude() + "," + mDeviceLocation.getLongitude();
+////            useService.getDirections(origin);
+//            } else {
+//                setLocation1FromLocation2(mDeviceLocation, location);
+//                updateMarker(new LatLng(location.getLatitude(), location.getLongitude()));
+//            }
+//            MyArActivity.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
+//            System.out.println("key_01 loaction changed");
+//        }catch (Exception e){
+//            Toast.makeText(this, "Onlocation change throw ex: "+ e.getMessage(), Toast.LENGTH_SHORT).show();
+//        }
     }
 
     private void getLocationPerission(){
@@ -654,4 +705,87 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             location1.setLongitude(location2.getLongitude());
         }
     }
+
+    /**
+     * check ar permission
+     */
+    private void checkArPermission(){
+        final String json = FoodJsonParser.loadStringFromAssets(this, "POI/poi.json");
+        List<FoodStoreCategory> categories;
+        categories = FoodJsonParser.getCategoriesFromJsonString(json);
+        final FoodStoreData foodStoreData = categories.get(0).getSamples().get(1);
+        PermissionManager permissionManager = ArchitectView.getPermissionManager();
+        final String[] permissions = UtilsPermmission.getPermissionsForArFeatures(foodStoreData.getArFeatures());
+        permissionManager.checkPermissions(this, permissions, PermissionManager.WIKITUDE_PERMISSION_REQUEST, new PermissionManager.PermissionManagerCallback() {
+            @Override
+            public void permissionsGranted(int requestCode) {
+                System.out.println("request code: "+ requestCode);
+                System.out.println("vao ganed");
+                Intent intent = new Intent(MapsActivity.this, MyArActivity.class);
+                intent.putExtra(FoodFinderUtils.FOOD_STORE_DATA, foodStoreData);
+                startActivity(intent);
+            }
+
+            @Override
+            public void permissionsDenied(@NonNull String[] deniedPermissions) {
+                Toast.makeText(MapsActivity.this, getString(R.string.permissions_denied) + Arrays.toString(deniedPermissions), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void showPermissionRationale(final int requestCode, @NonNull String[] strings) {
+                final AlertDialog.Builder alertBuilder = new AlertDialog.Builder(MapsActivity.this);
+                alertBuilder.setCancelable(true);
+                alertBuilder.setTitle(R.string.permission_rationale_title);
+                alertBuilder.setMessage(getString(R.string.permission_rationale_text) + Arrays.toString(permissions));
+                alertBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        permissionManager.positiveRationaleResult(requestCode, permissions);
+                    }
+                });
+
+                AlertDialog alert = alertBuilder.create();
+                alert.show();
+            }
+        });
+    }
+
+//    /**
+//     * set on search location button clicked
+//     * @param view
+//     */
+//    public void onMapSearch(View view) {
+//        EditText locationSearch = (EditText) findViewById(R.id.editText);
+//        String location = locationSearch.getText().toString();
+//        List<Address>addressList = null;
+//
+//        if (location != null || !location.equals("")) {
+//            Geocoder geocoder = new Geocoder(this);
+//            try {
+//                addressList = geocoder.getFromLocationName(location, 1);
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            Address address = addressList.get(0);
+//            LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+//            updateMarker(latLng);
+//        }
+//    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
 }

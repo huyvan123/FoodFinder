@@ -1,9 +1,7 @@
 package com.example.hp.myapplication.retrofit;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.location.Location;
 import android.os.Handler;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.widget.RecyclerView;
@@ -11,9 +9,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.hp.myapplication.ILoadmore;
+import com.example.hp.myapplication.recyvlerview.ILoadmore;
 import com.example.hp.myapplication.recyvlerview.MyAdapterRecycler;
-import com.example.hp.myapplication.WrapContentLinearLayoutManager;
+import com.example.hp.myapplication.recyvlerview.WrapContentLinearLayoutManager;
 import com.example.hp.myapplication.controller.MapsActivity;
 import com.example.hp.myapplication.model.detail.DetailResponse;
 import com.example.hp.myapplication.model.detail.DetailResult;
@@ -116,14 +114,19 @@ public class UseService implements View.OnClickListener{
      * @param begin
      */
     public void loadFoodStore(int quantity, int begin){
+        System.out.println("FOOD-[USE SERVICE]: VAO LOAD FOOD STORE");
         defaultQuantity = quantity;
         count3 = 0;
-
-        for(int i = begin; i < (begin + quantity); i++){
+        int total = begin + quantity;
+        if(total > searchResults.size()){
+            total = searchResults.size();
+            defaultQuantity = total - begin;
+        }
+        for(int i = begin; i < total; i++){
             try {
                 getFoodStoreDetail(searchResults.get(i).getPlaceId());
             }catch (IndexOutOfBoundsException e){
-                break;
+                e.printStackTrace();
             }
         }
     }
@@ -133,20 +136,23 @@ public class UseService implements View.OnClickListener{
      * @param placeId
      */
     private void getFoodStoreDetail(String placeId){
+        System.out.println("FOOD-[USE SERVICE]: VAO getFoodStoreDetail");
         iService.getDetailResponse(placeId, FoodFinderUtils.API_SERVER_KEY).enqueue(new Callback<DetailResponse>() {
             @Override
             public void onResponse(Call<DetailResponse> call, Response<DetailResponse> response) {
                 count3++;
                 if (response.isSuccessful()){
-                    DetailResult detailResult = response.body().getDetailResults();
+//                    DetailResult detailResult = response.body().getDetailResults();
                     detailResults.add(response.body().getDetailResults());
                 }
                 if(count3==defaultQuantity && checkOneClick){
+                    System.out.println("FOOD-[USE SERVICE]: VAO count3==defaultQuantity && checkOneClick");
                     checkOneClick = false;
                     adapterRecycler.notifyDataSetChanged();
                     adapterRecycler.setLoader();
                     setBottomSheet();
                 }else if(count3==defaultQuantity){
+                    System.out.println("FOOD-[USE SERVICE]: VAO count3==defaultQuantity");
                     adapterRecycler.notifyDataSetChanged();
                     adapterRecycler.setLoader();
                 }
@@ -154,7 +160,7 @@ public class UseService implements View.OnClickListener{
 
             @Override
             public void onFailure(Call<DetailResponse> call, Throwable t) {
-
+                System.out.println("FOOD-[USE SERVICE]: VAO getfoodDetail onFailure");
             }
         });
     }
@@ -182,6 +188,7 @@ public class UseService implements View.OnClickListener{
      * go first to find food store
      */
     public void action(){
+        System.out.println("FOOD-[USE SERVICE]: VAO action");
         enableProgressBar();
         for (Map<String, String> url : requestURL){
             try {
@@ -200,7 +207,7 @@ public class UseService implements View.OnClickListener{
                             }
                         }
                         if(count1 == count2){
-                            System.out.println("search result size: "+ searchResults.size());
+                            System.out.println("FOOD-[USE SERVICE]: Search result size:" + searchResults.size());
                             activity.tvSoluong.setText(String.valueOf(searchResults.size()));
                             setAllMarkerToMap();
                             detailResults.remove(detailResults.size() -1 );
@@ -239,21 +246,25 @@ public class UseService implements View.OnClickListener{
      * set recycler to bottom sheet
      */
     private void setBottomSheet(){
+        System.out.println("FOOD-[USE SERVICE]: VAO setBottomSheet");
         adapterRecycler.setLoadMore(new ILoadmore() {
             @Override
             public void onLoadMore() {
+                System.out.println("FOOD-[USE SERVICE]: VAO SET BOTTOM SHEET AND ON LOAD MORE");
                 System.out.println("marher lit sai: "+ UseService.markerList.size());
                 if(detailResults.size() <= UseService.markerList.size()) {
                     System.out.println("recycler load more");
                     detailResults.add(null);
                     recyclerView.post(new Runnable() {
                         public void run() {
+                            System.out.println("FOOD-[USE SERVICE]: VAO POST RUN");
                             adapterRecycler.notifyItemInserted(detailResults.size() - 1);
                         }
                     });
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
+                            System.out.println("FOOD-[USE SERVICE]: VAO post delay run");
                             detailResults.remove(detailResults.size() - 1);
                             adapterRecycler.notifyItemRemoved(detailResults.size());
                             //add load more
@@ -272,13 +283,15 @@ public class UseService implements View.OnClickListener{
      * turn on progress bar
      */
     private void enableProgressBar(){
-        recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(activity));
+        System.out.println("FOOD-[USE SERVICE]: VAO ENABLE PROGRESS BAR");
+//        recyclerView.setLayoutManager(new WrapContentLinearLayoutManager(activity));
         detailResults = new ArrayList<>();
         adapterRecycler = new MyAdapterRecycler(activity, detailResults, recyclerView, this);
-        recyclerView.setAdapter(adapterRecycler);
+//        recyclerView.setAdapter(adapterRecycler);
         detailResults.add(null);
         recyclerView.post(new Runnable() {
             @Override
+            //NOTIFI ITEM TO START LOAD
             public void run() {
                 adapterRecycler.notifyItemInserted(detailResults.size() - 1);
             }
@@ -286,6 +299,7 @@ public class UseService implements View.OnClickListener{
 
     }
 
+    //on food store item clicked
     @Override
     public void onClick(View view) {
         activity.isDeviceLocationChanged = true;

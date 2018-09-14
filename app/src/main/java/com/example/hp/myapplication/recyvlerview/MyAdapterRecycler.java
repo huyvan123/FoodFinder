@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.hp.myapplication.ILoadmore;
 import com.example.hp.myapplication.R;
 import com.example.hp.myapplication.model.detail.DetailResult;
 import com.example.hp.myapplication.model.utils.FoodFinderUtils;
@@ -29,22 +28,40 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
         private Activity activity;
         private List<DetailResult> detailResults;
         private int visiableThreshold = 5;
+        private boolean checkItemcount = true;
         private int lastVisibleItem, totalItemCount;
         private UseService useService;
 
 
+    /**
+     * 1. go constructor
+     * @param activity
+     * @param storeList
+     * @param recyclerView
+     * @param useService
+     */
         public MyAdapterRecycler(Activity activity, List<DetailResult> storeList, RecyclerView recyclerView, UseService useService) {
+            System.out.println("FOOD-[MyAdapterRecycler]: VAO MyAdapterRecycler constructor");
             this.activity = activity;
             this.detailResults = storeList;
             this.useService = useService;
+            recyclerView.setAdapter(this);
             final LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    checkItemcount = true;
+                    System.out.println("FOOD-[MyAdapterRecycler]: VAO on scroll listener");
                     super.onScrolled(recyclerView, dx, dy);
                     totalItemCount = linearLayoutManager.getItemCount();
                     lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
-                    if(!isLoading && totalItemCount <= (lastVisibleItem + visiableThreshold)){
+                    System.out.println("FUCK VAO ON SCROLL");
+                    System.out.println("FUCK IS LOADING: "+ isLoading);
+                    System.out.println("FUCK LAST VISIBLE ITEM: "+ lastVisibleItem);
+                    System.out.println("FUCK visiableThreshold: "+ visiableThreshold);
+                    System.out.println("FUCK totalItemCount: "+ totalItemCount);
+                    if(!isLoading && totalItemCount <= (lastVisibleItem + visiableThreshold) && lastVisibleItem%4 ==0){
+                        System.out.println("VAO LOAD MORE");
                         if(iLoadmore !=null){
                             System.out.println("totalItemCount: "+ totalItemCount);
                             iLoadmore.onLoadMore();
@@ -56,34 +73,56 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
 
         public void setLoadMore(ILoadmore loadMore){
+            System.out.println("FOOD-[MyAdapterRecycler]: SET LOAD MORE");
             this.iLoadmore = loadMore;
         }
 
-        @Override
+    /**
+     * 3.
+     * @param position
+     * @return
+     */
+    @Override
         public int getItemViewType(int position) {
-            System.out.println("position cc: "+ position);
+            System.out.println("FOOD-[MyAdapterRecycler]: GET ITEM VIEW TYPE with position: "+ position);
             return detailResults.get(position) == null ? VIEW_TYPE_LOADING : VIEW_TYPE_ITEM;
         }
 
+    /**
+     * 4.
+     * @param viewGroup
+     * @param i
+     * @return
+     */
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+            System.out.println("FOOD-[MyAdapterRecycler]: onCreateViewHolder");
             if (i == VIEW_TYPE_ITEM) {
+                System.out.println("FOOD-[MyAdapterRecycler]: onCreateViewHolder - VIEW_TYPE_ITEM");
                 View view = LayoutInflater.from(activity)
                         .inflate(R.layout.food_listview, viewGroup, false);
                 final RecyclerView.ViewHolder holder = new FoodViewHolder(view);
                 view.setOnClickListener(useService);
                 return holder;
             } else if (i == VIEW_TYPE_LOADING) {
+                System.out.println("FOOD-[MyAdapterRecycler]: onCreateViewHolder - VIEW_TYPE_LOADING");
                 View view = LayoutInflater.from(activity)
                         .inflate(R.layout.content_loading, viewGroup, false);
                 return new LoadingViewHolder(view);
             }
+            System.out.println("FOOD-[MyAdapterRecycler]: onCreateViewHolder - nothing");
             return new FoodViewHolder(viewGroup);
         }
 
-        @Override
+    /**
+     * 5.
+     * @param viewHolder
+     * @param i
+     */
+    @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+            System.out.println("FOOD-[MyAdapterRecycler]: onBindViewHolder");
             if(viewHolder instanceof FoodViewHolder){
                 DetailResult foodStore = detailResults.get(i);
                 FoodViewHolder foodViewHolder = (FoodViewHolder) viewHolder;
@@ -156,18 +195,30 @@ public class MyAdapterRecycler extends RecyclerView.Adapter<RecyclerView.ViewHol
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                checkItemcount = false;
             }else if(viewHolder instanceof LoadingViewHolder){
                 LoadingViewHolder loadingViewHolder = (LoadingViewHolder) viewHolder;
+                //set run progress bar
                 loadingViewHolder.progressBar.setIndeterminate(true);
             }
+
         }
 
-        @Override
+    /**
+     * 2. go 2 turn
+     * @return
+     */
+    @Override
         public int getItemCount() {
+//        if(!checkItemcount){
+//            return -1;
+//        }
+            System.out.println("FOOD-[MyAdapterRecycler]: getItemCount : "+ detailResults.size());
             return detailResults.size();
         }
 
         public void setLoader(){
+            System.out.println("FOOD-[MyAdapterRecycler]: setLoader : false");
             isLoading = false;
         }
 }

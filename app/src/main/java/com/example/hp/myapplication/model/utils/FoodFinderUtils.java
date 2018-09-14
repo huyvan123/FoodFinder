@@ -94,6 +94,7 @@ public interface FoodFinderUtils {
     public static final String START_ADDRESS = "start_address";
     public static final String STEPS = "steps";
     public static final String OVERVIEW_POLYLINE = "overview_polyline";
+    public static final String FOOD_STORE_DATA = "food_store_data";
 
 
     //route
