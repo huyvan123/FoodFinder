@@ -1,1 +1,1 @@
-# MapFinder
+# FoodFinder
